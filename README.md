@@ -1,6 +1,6 @@
 # Helios
 
-**A small solar panel that follows the light.** Built for hackPHS 2026, theme "Into the Skies".
+**A small solar panel that follows the light.** Built for HackPHS 2026, theme "Into the Skies".
 
 [Live dashboard](https://helios-hackphs.vercel.app/) | [Devpost](https://devpost.com/software/solar-benders) | [Demo video](https://youtu.be/VfBEgQn8bzc)
 
