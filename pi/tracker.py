@@ -1,40 +1,4 @@
 #!/usr/bin/env python3
-"""
-Micro-Tracker (merged): INA219 power, 4 LDRs on an ADS1115, SSD1306 OLED,
-hardware-PWM servos, closed-loop light following, night return-to-home,
-CSV logging and the A/B gain test.
-
-This program never touches the network. It appends one JSON line per second to
-outbox.jsonl; run sender.py in a second SSH session to push those lines to Vercel.
-
-Servos: pan GPIO12 (PWM0 ch0), tilt GPIO13 (PWM0 ch1). Hardware PWM, no threads.
-Servo red = MB102 5V only. Common ground to a Pi GND pin.
-
-Keys (SSH terminal):
-  a        arm servos (first pulse = electrical center = pan 0, tilt 45)
-  j / l    pan left / right 5 deg         (FIXED only)
-  i / k    tilt up / down 5 deg           (FIXED only)
-  t        toggle TRACK / FIXED
-  x        run the A/B gain test (10 s fixed at home, then 10 s tracking)
-  c        cover test + dark threshold calibration
-  b / r    balance LDR gains (panel facing the light) / reset balance
-  f / g    flip pan / tilt direction (saved)
-  [ / ]    gain down / up       - / =   deadband down / up
-  q        quit (PWM off)
-
-Boot (once, then reboot):
-  sudo raspi-config -> Interface Options -> I2C -> Enable
-  /boot/firmware/config.txt:
-    dtoverlay=pwm-2chan,pin=12,func=4,pin2=13,func2=4
-  Check: i2cdetect -y 1   (0x40 INA219, 0x48 ADS1115, 0x3C OLED)
-
-Install and run:
-  python3 -m venv .venv && source .venv/bin/activate
-  pip install -r requirements.txt
-  python tracker.py               # --no-servo for sensors/OLED only
-                                  # --calibrate for the cover test then exit
-
-"""
 
 from __future__ import annotations
 
@@ -154,7 +118,6 @@ class Keyboard:
         self.disable_raw()
 
 class HwServo:
-    """One servo on a hardware PWM channel. Pulse width in microseconds."""
 
     def __init__(self, chip: int, channel: int):
         if HardwarePWM is None:
@@ -188,7 +151,6 @@ class HwServo:
             self.running = False
 
 class Axis:
-    """One axis: proportional step with hysteresis, min/max step and hard limits."""
 
     def __init__(self, name: str, home: float, lo: float, hi: float,
                  center_deg: float, servo: HwServo | None):
@@ -217,7 +179,6 @@ class Axis:
         self.goto(self.pos + delta)
 
     def toward(self, target: float, max_step: float) -> bool:
-        """Slew toward target. Returns True once there."""
         d = target - self.pos
         if abs(d) <= max_step:
             self.goto(target)
@@ -304,7 +265,6 @@ class Sensors:
         raise OSError(f"ADS1115 read failed after retries: {last}")
 
     def read_power(self) -> tuple[float | None, float | None, float | None]:
-        """Returns (volts, amps, watts) or Nones."""
         if self.ina is None:
             return None, None, None
         try:
@@ -398,7 +358,6 @@ class CsvLog:
         self.f.close()
 
 class Outbox:
-    """Appends one JSON line per sample for sender.py to push. No network code here."""
 
     def __init__(self, period: float):
         self.f = OUTBOX_PATH.open("a", buffering=1)

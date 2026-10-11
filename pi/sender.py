@@ -1,24 +1,4 @@
 #!/usr/bin/env python3
-"""
-Pushes the tracker's samples to the Vercel dashboard over Wi-Fi.
-
-tracker.py appends one JSON line per second to outbox.jsonl. This script tails that file
-and POSTs new lines to /api/ingest with the x-shared-secret header. It only makes outbound
-HTTPS requests. If the network drops, lines stay in outbox.jsonl and are sent in batches
-when it returns (nothing is lost while this script is running; it remembers its place in
-.sender_offset across restarts).
-
-Run it in a second SSH session next to tracker.py:
-  python sender.py
-  python sender.py --from-start     # send everything already in outbox.jsonl
-  python sender.py --dry-run        # print what would be sent, send nothing
-
-Config (pi/.env, gitignored, or real environment variables):
-  MT_API_URL=https://your-app.vercel.app/api/ingest
-  MT_SHARED_SECRET=same value as INGEST_SECRET on Vercel
-
-Standard library only, no pip install needed.
-"""
 
 from __future__ import annotations
 
@@ -65,7 +45,6 @@ def write_offset(off: int) -> None:
     tmp.replace(OFFSET_FILE)
 
 def read_new(offset: int) -> tuple[list[dict], int]:
-    """Returns (parsed objects, new offset). Only whole lines are consumed."""
     if not OUTBOX.exists():
         return [], 0
     with OUTBOX.open("rb") as f:

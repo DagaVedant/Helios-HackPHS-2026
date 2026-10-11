@@ -99,7 +99,6 @@ if HARDWARE_AVAILABLE:
         HARDWARE_AVAILABLE = False
 
 def read_bh1750():
-    """Read ambient light intensity in lux."""
 
     if not HARDWARE_AVAILABLE:
         return int(
@@ -122,7 +121,6 @@ def read_bh1750():
         return 0
 
 def read_ina219():
-    """Read panel voltage and current."""
 
     if not HARDWARE_AVAILABLE:
         voltage = 5.0 + math.sin(time.time()) * 0.1
@@ -157,7 +155,6 @@ def read_ina219():
         return 0.0, 0.0
 
 def read_ldrs():
-    """Read the four light sensor values."""
 
     if not HARDWARE_AVAILABLE:
         current_time = time.time()
@@ -183,7 +180,6 @@ def read_ldrs():
     return 600, 620, 580, 590
 
 def hardware_control_loop():
-    """Continuously update sensor readings and servo positions."""
 
     global current_pan, current_tilt, telemetry, energy_wh_total
 
@@ -298,7 +294,6 @@ def hardware_control_loop():
 
 @app.route("/")
 def home():
-    """Serve the dashboard HTML file."""
 
     try:
         dashboard_path = Path(__file__).resolve().parent / "index.html"
@@ -316,7 +311,6 @@ def home():
 
 @app.route("/helios_logo.png")
 def helios_logo():
-    """Serve the dashboard logo."""
 
     return send_from_directory(
         Path(__file__).resolve().parent,
@@ -325,7 +319,6 @@ def helios_logo():
 
 @app.route("/energy-history")
 def energy_history_data():
-    """Return timestamped cumulative energy readings for the dashboard."""
 
     ranges = {
         "1h": 60 * 60,
@@ -446,7 +439,6 @@ def energy_history_data():
 
 @app.route("/stream")
 def stream_telemetry():
-    """Send live sensor data using Server-Sent Events."""
 
     def generate_data_packets():
         while True:
