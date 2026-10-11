@@ -41,7 +41,7 @@ export default handle(async (req, res) => {
       throw e;
     }
     send(res, 200, {
-      range, view, time_range: timeRange, total_wh,
+      range, view, time_range: timeRange, window: [lo, hi], total_wh,
       average_readings: rows.map((r) => ({
         minute_of_day: Number(r.minute_of_day),
         average_interval_wh: Number(r.average_interval_wh),

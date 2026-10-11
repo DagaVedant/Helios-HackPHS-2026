@@ -68,3 +68,7 @@ python sender.py       # reads outbox.jsonl, POSTs to /api/ingest
 `sender.py` reads `MT_API_URL` (https://your-app.vercel.app/api/ingest) and `MT_SHARED_SECRET` (same value as `INGEST_SECRET`) from `pi/.env` (see `pi/.env.example`). It keeps working through Wi-Fi drops and sends the backlog when the link returns. The page shows OFFLINE after 5 seconds without data.
 
 Dashboard routes: `/api/ingest` (POST, secret required), `/api/latest`, `/api/energy-history`, `/api/ab`, `/api/export` (CSV). The page shows pan and tilt on its 0-180 bars with 90 as the center (pan + 90, tilt + 45), and LDR counts scaled to 0-1023. Lux, temperature and humidity have no sensor on this build and show n/a. Run `cd web && npm test` for the logic checks.
+
+## Image credits
+
+The solar panel image on the dashboard is cropped and straightened from "Photovoltaic Solar Panel.jpg" by AcornToOak on Wikimedia Commons, licensed CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0). The photoresistor image is cropped from "LDR07 Light-dependent CdS photoresistor.jpg" by BenTheWikiMan on Wikimedia Commons, public domain.
