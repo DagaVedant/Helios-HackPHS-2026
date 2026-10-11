@@ -40,7 +40,7 @@ DEADZONE = 30
 SERVO_STEP = 2.0
 HISTORY_SAMPLE_SECONDS = 5.0
 HISTORY_MAX_SECONDS = 7 * 24 * 60 * 60
-HISTORY_DB_PATH = Path(__file__).resolve().parent / "energy_history.db"
+HISTORY_DB_PATH = Path(__file__).resolve().parent.parent / "pi" / "energy_history.db"
 
 
 # --- SHARED TELEMETRY STATE ---
