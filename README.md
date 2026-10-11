@@ -25,7 +25,7 @@ At night the mount returns home. An A/B test mode runs 10 s fixed, then 10 s tra
 
 Estimated per day, after the tracker's own energy use is subtracted.
 
-| Type | Energy used by the device | Net gain after install |
+| Type | Energy used by Helios | Net gain |
 |---|---|---|
 | Helios (3.6 W) | 0.3 Wh | +2.4 Wh (+13%) |
 | Rooftop panel (400 W) | 0.05 kWh | +0.28 kWh (+13%) |
