@@ -23,18 +23,13 @@ At night the mount returns home. An A/B test mode runs 10 s fixed, then 10 s tra
 
 ## Efficiency
 
-Does tracking make more energy than it uses? Yes, at every size. Estimates per day, using the low end of what the tracker costs to run and a modest +15% gain.
+Estimated per day, after the tracker's own energy use is subtracted.
 
-| | Fixed panel makes | Tracking adds | Tracker uses | Net gain |
-|---|---|---|---|---|
-| Helios (3.6 W) | 18 Wh | 2.7 Wh | 0.3 Wh | +2.4 Wh (+13%) |
-| Rooftop panel (400 W) | 2.2 kWh | 0.33 kWh | 0.05 kWh | +0.28 kWh (+13%) |
-| Solar farm row (40 kW) | 220 kWh | 33 kWh | 0.1 kWh | +33 kWh (+15%) |
-
-- **This build:** the 3.6 W panel makes about 18 Wh/day, so +18% is about 3.2 Wh. The servos barely matter. The Pi uses about four times the panel's whole output, so with a Pi this is a net loss. A microcontroller, or a Pi that sleeps between moves, fixes that.
-- **Solar farm:** single-axis trackers gain about 15 to 25% in sunny regions (5 to 10% where it is cloudy) and spend about 1% or less of their output on moving. In large scale solar farms, the cost of this pays off
-- **Rooftop:** a 400 W panel gains about 0.35 kWh/day net, which is slightly more than the energy use to run this system, so the system is beneficial but isn't a large difference.
-- **Torque:** the MG90S gives about 2 kg-cm. A larger panel needs a gearmotor, linear actuator or slew drive.
+| Type | Energy used by the device | Net gain after install |
+|---|---|---|
+| Helios (3.6 W) | 0.3 Wh | +2.4 Wh (+13%) |
+| Rooftop panel (400 W) | 0.05 kWh | +0.28 kWh (+13%) |
+| Solar farm row (40 kW) | 0.1 kWh | +33 kWh (+15%) |
 
 ## Dashboard
 
