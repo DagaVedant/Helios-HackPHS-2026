@@ -28,7 +28,7 @@
         .parts p { margin-top: 6px; color: var(--muted); font-size: 0.9375rem; max-width: 38ch; }
 
         .wiring-wrap { margin-top: 24px; overflow-x: auto; }
-        .wiring-wrap img { display: block; width: 100%; min-width: 900px; height: auto; background: #fff; box-shadow: 0 10px 30px rgba(11, 29, 58, 0.18); }
+        .wiring-wrap img { display: block; width: 100%; min-width: 1000px; height: auto; background: #fff; box-shadow: 0 10px 30px rgba(11, 29, 58, 0.18); }
         .wiring-cap { margin-top: 12px; }
 
         .pins { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0 6vw; margin-top: 24px; }
@@ -129,9 +129,9 @@
             <section aria-label="Wiring diagram">
                 <h2 class="big-h">Wiring</h2>
                 <div class="wiring-wrap" tabindex="0" role="group" aria-label="Wiring diagram, scrolls sideways on small screens">
-                    <img src="/img/schematic.png" alt="Breadboard wiring diagram: the Raspberry Pi 5 header on the bottom, the MB102 power module on the left, the ADS1115 and INA219 on the breadboard, the five buttons, the two servos on top and the four light sensors, OLED and solar panel on the right." width="2150" height="941" loading="lazy">
+                    <img src="/img/wiring.webp" alt="Wiring schematic: the Raspberry Pi 5 header at the bottom, the MB102 power module and INA219 on the left, the ADS1115 in the middle, the pan and tilt servos on top, the solar panel above the INA219 and the four light sensors on the right." width="2520" height="1600" loading="lazy">
                 </div>
-                <p class="note wiring-cap">top rails are 5 V for the servos, bottom rails are 3.3 V for everything else</p>
+                <p class="note wiring-cap">red wires are 5 V for the servos, orange is 3.3 V for everything else</p>
             </section>
         </main>
 
