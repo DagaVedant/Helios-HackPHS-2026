@@ -2,7 +2,6 @@ import { db, handle, send, HttpError, RANGES, TIME_WINDOWS } from "./_lib.js";
 
 const MAX_POINTS = 600;
 
-// Same contract as the old Flask /energy-history route.
 export default handle(async (req, res) => {
   const url = new URL(req.url, "http://localhost");
   const range = url.searchParams.get("range") ?? "24h";
@@ -52,7 +51,6 @@ export default handle(async (req, res) => {
     return;
   }
 
-  // cumulative: bucket so the chart never gets more than ~MAX_POINTS points
   let span = seconds;
   if (span == null) {
     const [{ span_s }] = await sql`

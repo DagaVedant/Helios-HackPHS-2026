@@ -1,4 +1,4 @@
-// Creates the tables. Usage: DATABASE_URL=... node scripts/migrate.mjs
+
 import { readFileSync } from "node:fs";
 import { neon } from "@neondatabase/serverless";
 import { loadEnv } from "./env.mjs";

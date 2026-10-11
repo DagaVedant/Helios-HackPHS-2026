@@ -1,4 +1,4 @@
-// Tiny .env loader so scripts work without extra dependencies.
+
 import { existsSync, readFileSync } from "node:fs";
 
 export function loadEnv() {

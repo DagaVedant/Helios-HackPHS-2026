@@ -151,7 +151,6 @@
         Chart.defaults.font.family = '"Manrope", system-ui, sans-serif';
         Chart.defaults.font.size = 12;
 
-        // Initialize the chart canvas.
         const ctx = document
             .getElementById("wattChart")
             .getContext("2d");
@@ -159,7 +158,6 @@
         const maxDataPoints = 45;
         const liveTimelineStart = Date.now();
 
-        // Configure the chart data.
         const chartData = {
             labels: Array(maxDataPoints).fill(""),
 
@@ -177,7 +175,6 @@
             ]
         };
 
-        // Create the live power chart.
         const wattChart = new Chart(ctx, {
             type: "line",
 
@@ -321,7 +318,6 @@
             if (selectedView === "average") {
                 const averageReadings = history.average_readings;
 
-                // one slot per 30 minutes across the whole window, so a sparse window keeps its axis
                 const [lo, hi] = history.window || [0, 1440];
                 const byMinute = new Map(
                     averageReadings.map((r) => [Number(r.minute_of_day), Number(r.average_interval_wh)])
@@ -427,7 +423,6 @@
             });
         }, 10000);
 
-        // Poll the Vercel API once a second (replaces the Flask event stream).
         const BADGE_OK = "badge ok";
         const BADGE_WARN = "badge warn";
         const BADGE_OFF = "badge off";
@@ -451,7 +446,6 @@
             readout.classList.toggle("quadrant-bright", isBrightest);
         };
 
-        // ---- 3D rig: turns and tilts with the pan bar and tilt from the data
         const rigPose = { lean: 0, turn: 0 };
         const rigEl = document.getElementById("rig");
         function renderRig() {
@@ -470,10 +464,9 @@
             document.getElementById("pan-angle").innerText = panAngle.toFixed(0) + "°";
             document.getElementById("pan-bar").style.width = (panAngle / 180 * 100) + "%";
 
-            // data.tilt is the mount's 15-85 deg elevation (+45 offset); lay the panel back as it lowers
             const tiltDeg = Math.max(15, Math.min(85, Number(data.tilt) - 45));
-            rigPose.lean = (85 - tiltDeg) * 0.85;          // 0 deg at full elevation, about 60 at the low limit
-            rigPose.turn = (panAngle - 90) * 0.9;           // same angle as the bar, 90 = square on
+            rigPose.lean = (85 - tiltDeg) * 0.85;
+            rigPose.turn = (panAngle - 90) * 0.9;
             renderRig();
 
             for (const i of [1, 2, 3, 4]) {
@@ -493,7 +486,6 @@
             updateQuadrantUI("v4", data.l4, brightest);
         }
 
-        // "the wifi is selling" screen: leave once the first reading is on the page (never before 1.4 s)
         const loaderShownAt = Date.now();
         function hideLoader() {
             const el = document.getElementById("loader");
@@ -510,7 +502,6 @@
             chartData.datasets[0].data.shift();
         }
 
-        // While no tracker is posting, step through the stored samples once a second, as if the lamp were moving.
         const replay = { rows: null, i: 0, loading: false, timer: null };
 
         async function startReplay() {
@@ -523,7 +514,7 @@
                     const body = await r.json();
                     replay.rows = body.samples || [];
                     replay.i = Math.min(60, Math.max(0, replay.rows.length - 1));
-                    // prefill the timeline with the readings leading up to the start point
+
                     for (let k = Math.max(0, replay.i - maxDataPoints); k < replay.i; k++) pushChartPoint(replay.rows[k].w);
                     wattChart.update("none");
                 } catch (error) {
@@ -541,7 +532,6 @@
             if (replay.timer) { clearInterval(replay.timer); replay.timer = null; }
         }
 
-        // 4 updates a second: samples are 1 s apart, so pan, tilt and the rest are interpolated between them
         let replayQuarter = 0;
         function stepReplay() {
             const rows = replay.rows;
@@ -585,7 +575,6 @@
             document.getElementById("last-seen").innerText = "";
             setBadge(data.status, data.status === "ALIGNED" ? BADGE_OK : BADGE_WARN);
 
-            // Add the newest reading to the live chart (once per new sample).
             const key = data.age_s + ":" + data.w;
             if (key === lastTelemetryKey) return;
             lastTelemetryKey = key;

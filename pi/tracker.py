@@ -59,13 +59,12 @@ from PIL import Image, ImageDraw, ImageFont
 try:
     from adafruit_ina219 import INA219
 except ImportError:
-    INA219 = None  # type: ignore
+    INA219 = None
 
 try:
     from rpi_hardware_pwm import HardwarePWM
 except ImportError:
-    HardwarePWM = None  # type: ignore
-
+    HardwarePWM = None
 
 HERE = Path(__file__).resolve().parent
 CONFIG_PATH = HERE / "config.json"
@@ -74,13 +73,13 @@ OUTBOX_PATH = HERE / "outbox.jsonl"
 
 SIDES = ("left", "right", "top", "bottom")
 JOG_STEP = 5.0
-US_PER_DEG = 1000.0 / 180.0          # 1000-2000 us over 180 deg
+US_PER_DEG = 1000.0 / 180.0
 MID_US = 1500.0
 SERVO_HZ = 50.0
 PERIOD_US = 1_000_000.0 / SERVO_HZ
 EMA_ALPHA = 0.35
 HOME_PAN, HOME_TILT = 0.0, 45.0
-HOME_STEP = 1.0                      # deg per cycle when parking
+HOME_STEP = 1.0
 LIMIT_WARN_S = 2.0
 
 DEFAULTS = {
@@ -95,14 +94,14 @@ DEFAULTS = {
     "dark_threshold": 2000,
     "oled_address": 60,
     "shunt_ohms": 0.1,
-    "pwm_chip": 2,                   # Pi 5 header PWM is pwmchip2
-    "pan_channel": 0,                # GPIO12
-    "tilt_channel": 1,               # GPIO13
+    "pwm_chip": 2,
+    "pan_channel": 0,
+    "tilt_channel": 1,
     "pan_min": -80.0,
     "pan_max": 80.0,
     "tilt_min": 15.0,
     "tilt_max": 85.0,
-    "home_after_s": 300.0,           # DARK this long -> park at home
+    "home_after_s": 300.0,
     "log_hz": 1.0,
     "outbox_s": 1.0,
     "ab_settle_s": 3.0,
@@ -111,14 +110,8 @@ DEFAULTS = {
     "ldr_scale": {"left": 1.0, "right": 1.0, "top": 1.0, "bottom": 1.0},
 }
 
-
-# ---------------------------------------------------------------------------
-# Config / helpers
-# ---------------------------------------------------------------------------
-
 def clamp(v: float, lo: float, hi: float) -> float:
     return max(lo, min(hi, v))
-
 
 def load_config() -> dict:
     cfg = json.loads(CONFIG_PATH.read_text()) if CONFIG_PATH.exists() else {}
@@ -131,10 +124,8 @@ def load_config() -> dict:
             cfg.setdefault(k, v)
     return cfg
 
-
 def save_config(cfg: dict) -> None:
     CONFIG_PATH.write_text(json.dumps(cfg, indent=2) + "\n")
-
 
 class Keyboard:
     def __init__(self):
@@ -161,11 +152,6 @@ class Keyboard:
 
     def close(self) -> None:
         self.disable_raw()
-
-
-# ---------------------------------------------------------------------------
-# Servos (hardware PWM)
-# ---------------------------------------------------------------------------
 
 class HwServo:
     """One servo on a hardware PWM channel. Pulse width in microseconds."""
@@ -201,7 +187,6 @@ class HwServo:
                 pass
             self.running = False
 
-
 class Axis:
     """One axis: proportional step with hysteresis, min/max step and hard limits."""
 
@@ -210,7 +195,7 @@ class Axis:
         self.name = name
         self.home = home
         self.lo, self.hi = lo, hi
-        self.center_deg = center_deg      # angle that maps to 1500 us
+        self.center_deg = center_deg
         self.servo = servo
         self.pos = home
         self.moving = False
@@ -272,11 +257,6 @@ class Axis:
             self.limit_warned = False
         return step
 
-
-# ---------------------------------------------------------------------------
-# Sensors + OLED
-# ---------------------------------------------------------------------------
-
 class Sensors:
     def __init__(self, cfg: dict):
         self.i2c = busio.I2C(board.SCL, board.SDA)
@@ -292,7 +272,7 @@ class Sensors:
             raise RuntimeError("ADS1115 not found at 0x48 (check wiring / ADDR to GND)")
 
         self.ads = ADS1115(self.i2c)
-        self.ads.gain = 1  # +/-4.096 V
+        self.ads.gain = 1
         self.chans = [AnalogIn(self.ads, i) for i in range(4)]
 
         addr = int(cfg["oled_address"])
@@ -354,12 +334,7 @@ class Sensors:
             self.oled.image(img)
             self.oled.show()
         except OSError:
-            pass  # drop one bad frame
-
-
-# ---------------------------------------------------------------------------
-# Calibration
-# ---------------------------------------------------------------------------
+            pass
 
 def cover_test(sensors: Sensors, cfg: dict, kb: Keyboard | None = None) -> None:
     if kb is not None:
@@ -394,11 +369,6 @@ def cover_test(sensors: Sensors, cfg: dict, kb: Keyboard | None = None) -> None:
         if kb is not None:
             kb.enable_raw()
 
-
-# ---------------------------------------------------------------------------
-# CSV log + upload
-# ---------------------------------------------------------------------------
-
 class CsvLog:
     FIELDS = ["iso_time", "t_s", "state", "pan", "tilt", "volts", "amps", "watts",
               "ldr_left", "ldr_right", "ldr_top", "ldr_bottom"]
@@ -426,7 +396,6 @@ class CsvLog:
 
     def close(self) -> None:
         self.f.close()
-
 
 class Outbox:
     """Appends one JSON line per sample for sender.py to push. No network code here."""
@@ -456,11 +425,6 @@ class Outbox:
 
     def close(self) -> None:
         self.f.close()
-
-
-# ---------------------------------------------------------------------------
-# Main
-# ---------------------------------------------------------------------------
 
 def main() -> int:
     ap = argparse.ArgumentParser(description="Micro-Tracker")
@@ -497,12 +461,12 @@ def main() -> int:
     kb = Keyboard()
     period = 1.0 / float(cfg["loop_hz"])
 
-    state = "UNARMED"        # UNARMED, FIXED, TRACK
+    state = "UNARMED"
     armed = False
     ema: list[float] | None = None
     axis_turn = 0
     dark_since: float | None = None
-    ab: dict | None = None   # A/B gain test state
+    ab: dict | None = None
     last_status = 0.0
 
     print("\nKeys: a=arm  j/l=pan  i/k=tilt  t=track  x=A/B test  c=calibrate  "
@@ -518,7 +482,6 @@ def main() -> int:
         while True:
             now = time.monotonic()
 
-            # ---- keys ----
             k = kb.getch()
             if k:
                 k = k.lower()
@@ -596,7 +559,6 @@ def main() -> int:
                     elif k == "k":
                         tilt.jog(-JOG_STEP)
 
-            # ---- sensors ----
             try:
                 raw = sensors.read_raw()
             except OSError as e:
@@ -621,7 +583,6 @@ def main() -> int:
             mn = float(cfg["min_step_deg"])
             is_dark = total < float(cfg["dark_threshold"])
 
-            # ---- A/B test sequencing ----
             if ab is not None:
                 el = now - ab["t0"]
                 settle = float(cfg["ab_settle_s"])
@@ -648,7 +609,6 @@ def main() -> int:
                         state = "TRACK"
                         ab = None
 
-            # ---- control ----
             display = state
             if ab is not None:
                 display = f"AB-{ab['phase']}"
@@ -675,7 +635,6 @@ def main() -> int:
                 if display == "TRACK" and dp == 0.0 and dt_ == 0.0:
                     display = "LOCKED"
 
-            # ---- outputs ----
             sensors.draw(display, pan.pos if armed else None, tilt.pos, total,
                          volts, amps, watts)
             sample = {
@@ -716,7 +675,6 @@ def main() -> int:
             pass
         print("\nPWM off. Bye.")
     return 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

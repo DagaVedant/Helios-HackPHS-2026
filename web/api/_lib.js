@@ -44,11 +44,8 @@ export function secretOk(provided, expected) {
   return a.length === b.length && timingSafeEqual(a, b);
 }
 
-// ---- Pi sample -> stored row -------------------------------------------
-
 const num = (v) => (typeof v === "number" && Number.isFinite(v) ? v : null);
 
-/** Validates one sample from sender.py. Returns a normalized object or throws. */
 export function parseSample(raw, nowMs = Date.now()) {
   if (!raw || typeof raw !== "object") throw new HttpError(400, "sample must be an object");
   const ts = new Date(raw.timestamp);
@@ -71,16 +68,13 @@ export function parseSample(raw, nowMs = Date.now()) {
   };
 }
 
-/** Energy bookkeeping: gaps longer than 10 s count as 10 s so outages don't invent energy. */
 export function energyStep(prevTsMs, prevEnergyWh, tsMs, watts) {
   const dt = prevTsMs == null ? 0 : Math.min(Math.max((tsMs - prevTsMs) / 1000, 0), 10);
   const intervalWh = (watts * dt) / 3600;
   return { intervalWh, energyWh: (prevEnergyWh ?? 0) + intervalWh };
 }
 
-// ---- stored row -> page fields -------------------------------------------
-
-export const LDR_MAX_COUNTS = 26400; // 3.3 V of the ADS1115's +/-4.096 V range at gain 1
+export const LDR_MAX_COUNTS = 26400;
 export const OFFLINE_AFTER_S = 5;
 
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
@@ -97,25 +91,24 @@ export function statusFor(state) {
     case "HOME":
       return "NIGHT MODE";
     default:
-      return "IDLE"; // FIXED, UNARMED, AB-A
+      return "IDLE";
   }
 }
 
-/** Maps the Pi sample to the field names the Helios page already uses. */
 export function mapLatest(p, receivedAtMs, nowMs = Date.now()) {
   const ageS = Math.max(0, (nowMs - receivedAtMs) / 1000);
   return {
     v: p.volts ?? 0,
     ma: (p.amps ?? 0) * 1000,
     w: p.watts ?? 0,
-    lux: null, // no light sensor on this build
+    lux: null,
     t: null,
     h: null,
     l1: scaleLdr(p.ldr?.left),
     l2: scaleLdr(p.ldr?.right),
     l3: scaleLdr(p.ldr?.top),
     l4: scaleLdr(p.ldr?.bottom),
-    // pan -80..80 and tilt 15..85 are shown on the page's 0..180 bars with 90 as center
+
     pan: clamp((p.pan ?? 0) + 90, 0, 180),
     tilt: clamp((p.tilt ?? 45) + 45, 0, 180),
     status: statusFor(p.state),
@@ -124,8 +117,6 @@ export function mapLatest(p, receivedAtMs, nowMs = Date.now()) {
     online: ageS <= OFFLINE_AFTER_S,
   };
 }
-
-// ---- energy history ranges -------------------------------------------
 
 export const RANGES = { "1h": 3600, "6h": 21600, "24h": 86400, "7d": 604800, month: 2592000, all: null };
 export const TIME_WINDOWS = {

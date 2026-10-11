@@ -1,7 +1,5 @@
 import { db, handle, send, mapLatest } from "./_lib.js";
 
-// Stored samples in the page's field names, oldest first. The page plays these back one per second
-// while no live tracker is posting.
 export default handle(async (req, res) => {
   const sql = db();
   const rows = await sql`

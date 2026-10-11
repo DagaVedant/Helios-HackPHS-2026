@@ -1,11 +1,10 @@
-// No-database checks of the pure logic. Run: npm test
+
 import assert from "node:assert/strict";
 import { parseSample, energyStep, mapLatest, statusFor, secretOk } from "../api/_lib.js";
 import { generate } from "./seed.mjs";
 
 const now = Date.parse("2026-10-11T12:00:00Z");
 
-// parseSample
 const s = parseSample({ timestamp: "2026-10-11T11:59:59Z", volts: 8.6, amps: 0.05, watts: 0.43,
   ldr: { left: 100, right: 200, top: 300, bottom: 400 }, pan: 10, tilt: 50, state: "TRACK" }, now);
 assert.equal(s.ldr_right, 200);
@@ -14,7 +13,6 @@ assert.throws(() => parseSample({ timestamp: "nope" }, now), /timestamp/);
 assert.throws(() => parseSample({ timestamp: "2027-01-01T00:00:00Z" }, now), /future/);
 assert.throws(() => parseSample(null, now), /object/);
 
-// energyStep: 1 W for 1 s = 1/3600 Wh; long gaps are capped at 10 s
 let r = energyStep(null, 0, 1000, 1);
 assert.equal(r.intervalWh, 0);
 r = energyStep(1000, 0.5, 2000, 1);
@@ -23,7 +21,6 @@ assert.ok(Math.abs(r.energyWh - (0.5 + 1 / 3600)) < 1e-12);
 r = energyStep(0, 0, 3_600_000, 1);
 assert.ok(Math.abs(r.intervalWh - 10 / 3600) < 1e-12);
 
-// mapLatest
 const m = mapLatest({ volts: 8.7, amps: 0.05, watts: 0.435, ldr: { left: 26400, right: 0, top: 13200, bottom: 99999 },
   pan: -80, tilt: 85, state: "LOCKED" }, now - 2000, now);
 assert.equal(m.ma, 50);
@@ -43,14 +40,12 @@ for (const [st, want] of [["TRACK", "SEARCHING"], ["DARK", "NIGHT MODE"], ["HOME
   assert.equal(statusFor(st), want);
 }
 
-// secretOk
 assert.equal(secretOk("abc", "abc"), true);
 assert.equal(secretOk("abd", "abc"), false);
 assert.equal(secretOk("ab", "abc"), false);
 assert.equal(secretOk(undefined, "abc"), false);
 assert.equal(secretOk("x", ""), false);
 
-// generator stays inside the stated ranges
 const { rows, ab } = generate({ endMs: now });
 assert.equal(rows.length, 3600);
 for (const x of rows) {

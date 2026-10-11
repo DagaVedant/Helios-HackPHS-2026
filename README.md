@@ -2,7 +2,7 @@
 
 **A small solar panel that follows the light.** Built for hackPHS 2026, theme "Into the Skies".
 
-[Live dashboard](https://helios-hackphs.vercel.app/) | [Devpost](https://devpost.com/software/solar-benders) | Demo video: TBD
+[Live dashboard](https://helios-hackphs.vercel.app/) | [Devpost](https://devpost.com/software/solar-benders) | [Demo video](https://youtu.be/VfBEgQn8bzc)
 
 ![Helios build](web/public/img/build-black.jpg)
 

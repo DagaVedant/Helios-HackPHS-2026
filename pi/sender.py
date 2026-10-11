@@ -35,12 +35,11 @@ HERE = Path(__file__).resolve().parent
 OUTBOX = HERE / "outbox.jsonl"
 OFFSET_FILE = HERE / ".sender_offset"
 
-BATCH_MAX = 50          # server accepts up to 100 samples per request
+BATCH_MAX = 50
 POLL_S = 1.0
 TIMEOUT_S = 8.0
 BACKOFF_MAX_S = 30.0
 MAX_LINE_BYTES = 64 * 1024
-
 
 def load_env() -> None:
     p = HERE / ".env"
@@ -52,21 +51,18 @@ def load_env() -> None:
             k, v = line.split("=", 1)
             os.environ.setdefault(k.strip(), v.strip().strip('"').strip("'"))
 
-
 def read_offset(start_at_end: bool) -> int:
     size = OUTBOX.stat().st_size if OUTBOX.exists() else 0
     try:
         off = int(OFFSET_FILE.read_text().strip())
-        return off if 0 <= off <= size else 0   # file was truncated or replaced
+        return off if 0 <= off <= size else 0
     except (OSError, ValueError):
         return size if start_at_end else 0
-
 
 def write_offset(off: int) -> None:
     tmp = OFFSET_FILE.with_suffix(".tmp")
     tmp.write_text(str(off))
     tmp.replace(OFFSET_FILE)
-
 
 def read_new(offset: int) -> tuple[list[dict], int]:
     """Returns (parsed objects, new offset). Only whole lines are consumed."""
@@ -88,11 +84,10 @@ def read_new(offset: int) -> tuple[list[dict], int]:
         try:
             obj = json.loads(line)
         except ValueError:
-            continue  # half-written or corrupt line
+            continue
         if isinstance(obj, dict):
             items.append(obj)
     return items, offset + consumed
-
 
 def post(url: str, secret: str, samples: list[dict], ab: dict | None) -> None:
     body: dict = {"samples": samples}
@@ -106,7 +101,6 @@ def post(url: str, secret: str, samples: list[dict], ab: dict | None) -> None:
     )
     with urllib.request.urlopen(req, timeout=TIMEOUT_S) as resp:
         resp.read()
-
 
 def main() -> int:
     ap = argparse.ArgumentParser(description="Send tracker samples to Vercel")
@@ -136,7 +130,7 @@ def main() -> int:
     try:
         while True:
             items, new_offset = read_new(offset)
-            if new_offset < offset:           # outbox replaced
+            if new_offset < offset:
                 offset = 0
                 continue
             samples = [i for i in items if i.get("type") != "ab"]
@@ -151,7 +145,7 @@ def main() -> int:
                         post(url, secret, samples, ab)
                     except urllib.error.HTTPError as e:
                         if e.code in (400, 413):
-                            # the server rejected this batch for good; skip it so we don't loop forever
+
                             print(f"\nserver rejected batch ({e.code}), skipping it")
                         elif e.code == 401:
                             print("\n401: MT_SHARED_SECRET does not match INGEST_SECRET on Vercel")
@@ -172,7 +166,7 @@ def main() -> int:
                 sent += len(samples)
                 offset = new_offset
                 write_offset(offset)
-            elif new_offset > offset:         # only blank/corrupt lines
+            elif new_offset > offset:
                 offset = new_offset
                 write_offset(offset)
 
@@ -186,7 +180,6 @@ def main() -> int:
     except KeyboardInterrupt:
         print(f"\nStopped. Sent {sent} samples.")
     return 0
-
 
 if __name__ == "__main__":
     sys.exit(main())

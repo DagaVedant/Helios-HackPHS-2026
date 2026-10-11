@@ -2,7 +2,6 @@ import { db, handle, send, HttpError, secretOk, parseSample, energyStep } from "
 
 const MAX_BATCH = 100;
 
-// POST from pi/sender.py. Body: one sample, an array, or { samples: [...], ab_result? }.
 export default handle(async (req, res) => {
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
@@ -29,7 +28,7 @@ export default handle(async (req, res) => {
 
     for (const s of samples) {
       const t = s.ts.getTime();
-      if (prevTs != null && t <= prevTs) continue; // duplicate or out of order
+      if (prevTs != null && t <= prevTs) continue;
       const { intervalWh, energyWh } = energyStep(prevTs, prevEnergy, t, s.watts);
       await sql`
         INSERT INTO energy_samples

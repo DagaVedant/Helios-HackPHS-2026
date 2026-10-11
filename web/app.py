@@ -7,9 +7,6 @@ from pathlib import Path
 
 from flask import Flask, Response, request, send_from_directory
 
-
-# Raspberry Pi 5 hardware imports.
-# If the required libraries are unavailable, use simulation mode.
 try:
     from smbus2 import SMBus
     from gpiozero import AngularServo
@@ -24,11 +21,7 @@ except ImportError:
         "(No Pi hardware libraries detected)"
     )
 
-
 app = Flask(__name__)
-
-
-# --- GLOBAL CONFIGURATION SETTINGS ---
 
 PAN_PIN = 12
 TILT_PIN = 13
@@ -41,9 +34,6 @@ SERVO_STEP = 2.0
 HISTORY_SAMPLE_SECONDS = 5.0
 HISTORY_MAX_SECONDS = 7 * 24 * 60 * 60
 HISTORY_DB_PATH = Path(__file__).resolve().parent.parent / "pi" / "energy_history.db"
-
-
-# --- SHARED TELEMETRY STATE ---
 
 telemetry = {
     "v": 0.0,
@@ -79,14 +69,8 @@ energy_wh_total = energy_database.execute(
     "SELECT COALESCE(MAX(energy_wh), 0) FROM energy_samples"
 ).fetchone()[0]
 
-
-# --- SERVO POSITION VARIABLES ---
-
 current_pan = 90.0
 current_tilt = 90.0
-
-
-# --- HARDWARE INITIALIZATION ---
 
 if HARDWARE_AVAILABLE:
     try:
@@ -114,9 +98,6 @@ if HARDWARE_AVAILABLE:
 
         HARDWARE_AVAILABLE = False
 
-
-# --- BH1750 LIGHT SENSOR ---
-
 def read_bh1750():
     """Read ambient light intensity in lux."""
 
@@ -132,7 +113,6 @@ def read_bh1750():
             2,
         )
 
-        # Combine the two returned bytes into one reading.
         raw_value = (data[0] << 8) | data[1]
 
         return int(raw_value / 1.2)
@@ -140,9 +120,6 @@ def read_bh1750():
     except Exception as error:
         print(f"BH1750 read error: {error}")
         return 0
-
-
-# --- INA219 VOLTAGE AND CURRENT SENSOR ---
 
 def read_ina219():
     """Read panel voltage and current."""
@@ -179,9 +156,6 @@ def read_ina219():
         print(f"INA219 read error: {error}")
         return 0.0, 0.0
 
-
-# --- FOUR LIGHT-DEPENDENT RESISTORS ---
-
 def read_ldrs():
     """Read the four light sensor values."""
 
@@ -206,11 +180,7 @@ def read_ldrs():
 
         return l1, l2, l3, l4
 
-    # Placeholder values: replace with actual ADC readings.
     return 600, 620, 580, 590
-
-
-# --- BACKGROUND SOLAR TRACKING LOOP ---
 
 def hardware_control_loop():
     """Continuously update sensor readings and servo positions."""
@@ -224,14 +194,12 @@ def hardware_control_loop():
     while True:
         time.sleep(0.05)
 
-        # Read sensor measurements.
         lux = read_bh1750()
 
         voltage, current_ma = read_ina219()
 
         l1, l2, l3, l4 = read_ldrs()
 
-        # Calculate electrical power in watts.
         watts = voltage * (current_ma / 1000.0)
         now = time.monotonic()
         elapsed_hours = (now - last_measurement_time) / 3600.0
@@ -260,23 +228,19 @@ def hardware_control_loop():
 
             last_history_time = now
 
-        # Calculate average light levels.
         avg_top = (l1 + l2) / 2
         avg_bottom = (l3 + l4) / 2
 
         avg_left = (l1 + l3) / 2
         avg_right = (l2 + l4) / 2
 
-        # Determine tracking errors.
         diff_elevation = avg_top - avg_bottom
         diff_azimuth = avg_left - avg_right
 
         status = "ALIGNED"
 
-        # Track the brightest direction when sufficient light exists.
         if lux > 500:
 
-            # Vertical tracking.
             if abs(diff_elevation) > DEADZONE:
                 status = "SEARCHING"
 
@@ -292,7 +256,6 @@ def hardware_control_loop():
                         0.0,
                     )
 
-            # Horizontal tracking.
             if abs(diff_azimuth) > DEADZONE:
                 status = "SEARCHING"
 
@@ -308,7 +271,6 @@ def hardware_control_loop():
                         180.0,
                     )
 
-            # Apply the new servo positions.
             if HARDWARE_AVAILABLE:
                 try:
                     pan_servo.angle = current_pan
@@ -320,7 +282,6 @@ def hardware_control_loop():
         else:
             status = "NIGHT MODE"
 
-        # Publish the latest readings to the dashboard.
         telemetry.update({
             "v": voltage,
             "ma": current_ma,
@@ -334,9 +295,6 @@ def hardware_control_loop():
             "tilt": current_tilt,
             "status": status,
         })
-
-
-# --- DASHBOARD ROUTE ---
 
 @app.route("/")
 def home():
@@ -356,7 +314,6 @@ def home():
             404,
         )
 
-
 @app.route("/helios_logo.png")
 def helios_logo():
     """Serve the dashboard logo."""
@@ -365,7 +322,6 @@ def helios_logo():
         Path(__file__).resolve().parent,
         "helios_logo.png",
     )
-
 
 @app.route("/energy-history")
 def energy_history_data():
@@ -488,9 +444,6 @@ def energy_history_data():
         "readings": readings,
     }
 
-
-# --- LIVE TELEMETRY STREAM ---
-
 @app.route("/stream")
 def stream_telemetry():
     """Send live sensor data using Server-Sent Events."""
@@ -512,12 +465,8 @@ def stream_telemetry():
         },
     )
 
-
-# --- APPLICATION ENTRY POINT ---
-
 if __name__ == "__main__":
 
-    # Start the background sensor and tracking loop.
     hardware_thread = threading.Thread(
         target=hardware_control_loop,
         daemon=True,
@@ -525,7 +474,6 @@ if __name__ == "__main__":
 
     hardware_thread.start()
 
-    # Start the Flask web server.
     app.run(
         host="0.0.0.0",
         port=5000,

@@ -2,7 +2,6 @@ import { db, handle, send, HttpError, RANGES } from "./_lib.js";
 
 const MAX_ROWS = 200000;
 
-// CSV download of the stored samples. ?range=1h|6h|24h|7d|month|all (default all)
 export default handle(async (req, res) => {
   const url = new URL(req.url, "http://localhost");
   const range = url.searchParams.get("range") ?? "all";

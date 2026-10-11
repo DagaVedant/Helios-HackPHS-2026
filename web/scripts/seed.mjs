@@ -1,9 +1,5 @@
-// Fills Neon with a 1 hour, 1 Hz dataset generated from the value ranges observed while building:
-//   panel volts 8.4-8.9 V, current 10-100 mA, LDR counts on the ADS1115 scale,
-//   pan +/-80 deg, tilt 15-85 deg, the same control law as pi/tracker.py.
-// It is a model of the tracker's behaviour, not a raw capture. See the README.
-//
-// Usage: node scripts/seed.mjs [--dry-run] [--reset] [--end 2026-10-11T18:00:00Z] [--seed 7]
+
+
 import { neon } from "@neondatabase/serverless";
 import { loadEnv } from "./env.mjs";
 import { energyStep } from "../api/_lib.js";
@@ -30,9 +26,8 @@ export function generate({ endMs = Date.now(), seed = 7 } = {}) {
   const noise = (s) => (rand() * 2 - 1) * s;
   const startMs = endMs - (SECONDS - 1) * 1000;
 
-  // brightness steps to a new level every 15 s (a cloud, a hand, a dimmer), easing over 3 s
   const levels = Array.from({ length: Math.ceil(SECONDS / 15) + 1 }, () => 0.62 + 0.55 * rand());
-  levels[0] = levels[1] = levels[2] = 1; // keep the opening A/B test window steady
+  levels[0] = levels[1] = levels[2] = 1;
   const level = (t) => {
     const k = Math.floor(t / 15);
     const prev = k === 0 ? 1 : levels[k - 1];
@@ -54,13 +49,13 @@ export function generate({ endMs = Date.now(), seed = 7 } = {}) {
   };
 
   for (let t = 0; t < SECONDS; t++) {
-    // where the lamp is, in the mount's pan/tilt frame, and how bright it is
-    const early = 1 - smooth(t / 90); // lamp starts near the home pose, then wanders
-    const tri = 1 - Math.abs(((t % 60) / 30) - 1); // 0 -> 1 -> 0 over 60 s
+
+    const early = 1 - smooth(t / 90);
+    const tri = 1 - Math.abs(((t % 60) / 30) - 1);
     const az = -70 + 120 * tri;
     const el = clamp(52 + 24 * Math.sin(t / 150 + 2.1) + 9 * Math.sin(t / 47) + 3 * Math.sin(t / 29), 17, 83) * (1 - early) + 62 * early;
     let b = 0.75 + 0.15 * Math.sin(t / 520) + 0.08 * Math.sin(t / 97);
-    if (t >= 1500 && t < 1560) b *= 0.55; // someone walks past the lamp
+    if (t >= 1500 && t < 1560) b *= 0.55;
     if (t >= 2600 && t < 2640) b *= 0.6;
     b = clamp(b * level(t), 0.25, 1);
 
@@ -70,7 +65,7 @@ export function generate({ endMs = Date.now(), seed = 7 } = {}) {
       exN = Math.tanh((az - pan) / 35) * 0.6;
       ezN = Math.tanh((el - tilt) / 35) * 0.6;
       if (!tracking) continue;
-      pan = az; // the pan axis sweeps on a fixed 60 s cycle (4 deg/s)
+      pan = az;
       tilt = axisStep(ezN, "tilt", TILT[0], TILT[1], tilt);
       moved = true;
     }
@@ -97,7 +92,6 @@ export function generate({ endMs = Date.now(), seed = 7 } = {}) {
     });
   }
 
-  // cumulative energy, same bookkeeping as /api/ingest
   let prevTs = null, prevE = 0;
   for (const r of rows) {
     const { intervalWh, energyWh } = energyStep(prevTs, prevE, r.ts.getTime(), r.watts);
@@ -107,7 +101,6 @@ export function generate({ endMs = Date.now(), seed = 7 } = {}) {
     prevE = energyWh;
   }
 
-  // A/B test: 7 s of the fixed pose before tracking started, 7 s of tracking after it settled
   const mean = (a, b) => rows.slice(a, b).reduce((s, r) => s + r.watts, 0) / (b - a);
   const fixed = mean(10, 17) * 1000, tracking = mean(28, 35) * 1000;
   const ab = {

@@ -141,7 +141,7 @@
         </footer>
     </div>
     <script>
-        // "the wifi is selling" screen: leave once the page has loaded (never before 1.4 s)
+
         const shownAt = Date.now();
         const leave = () => setTimeout(() => document.getElementById("loader").classList.add("done"), Math.max(0, 1400 - (Date.now() - shownAt)));
         if (document.readyState === "complete") leave(); else window.addEventListener("load", leave);
