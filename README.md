@@ -31,8 +31,8 @@ At night the mount returns home. An A/B test mode runs 10 s fixed, then 10 s tra
 | Servos plus ESP32 or Pico class | ~0.3 W | ~7 Wh | ~8 W at +18%, ~5 W at +30% |
 
 - **This build:** the 3.6 W panel makes about 18 Wh/day, so +18% is about 3.2 Wh. The servos barely matter. The Pi uses about four times the panel's whole output, so with a Pi this is a net loss. A microcontroller, or a Pi that sleeps between moves, fixes that.
-- **Solar farm:** single-axis trackers gain about 15 to 25% in sunny regions (5 to 10% where it is cloudy) and spend about 1% or less of their output on moving. They break even at a gain of roughly 0.1%, so the energy is clearly positive. The real cost is hardware, upkeep and wind handling.
-- **Rooftop:** a 400 W panel gains about 0.35 kWh/day net, worth roughly $20 to 25 a year. Adding 20% more fixed panels is cheaper, so rooftops stay fixed.
+- **Solar farm:** single-axis trackers gain about 15 to 25% in sunny regions (5 to 10% where it is cloudy) and spend about 1% or less of their output on moving. In large scale solar farms, the cost of this pays off
+- **Rooftop:** a 400 W panel gains about 0.35 kWh/day net, which is slightly more than the energy use to run this system, so the system is beneficial but isn't a large difference.
 - **Torque:** the MG90S gives about 2 kg-cm. A larger panel needs a gearmotor, linear actuator or slew drive.
 
 ## Dashboard
