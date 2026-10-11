@@ -23,12 +23,13 @@ At night the mount returns home. An A/B test mode runs 10 s fixed, then 10 s tra
 
 ## Efficiency
 
-| Setup | Parasitic load | Daily cost | Panel needed to break even |
-|---|---|---|---|
-| Servos only, PWM detached | tiny | ~0.03 Wh | under 1 W |
-| Servos, PWM held all day | ~0.1 W | ~1 Wh | ~1 W |
-| Servos plus Pi 5, always on | ~3 W | ~72 Wh | ~80 W at +18%, ~48 W at +30% |
-| Servos plus ESP32 or Pico class | ~0.3 W | ~7 Wh | ~8 W at +18%, ~5 W at +30% |
+Does tracking make more energy than it uses? Yes, at every size. Estimates per day, using the low end of what the tracker costs to run and a modest +15% gain.
+
+| | Fixed panel makes | Tracking adds | Tracker uses | Net gain |
+|---|---|---|---|---|
+| Helios (3.6 W) | 18 Wh | 2.7 Wh | 0.3 Wh | +2.4 Wh (+13%) |
+| Rooftop panel (400 W) | 2.2 kWh | 0.33 kWh | 0.05 kWh | +0.28 kWh (+13%) |
+| Solar farm row (40 kW) | 220 kWh | 33 kWh | 0.1 kWh | +33 kWh (+15%) |
 
 - **This build:** the 3.6 W panel makes about 18 Wh/day, so +18% is about 3.2 Wh. The servos barely matter. The Pi uses about four times the panel's whole output, so with a Pi this is a net loss. A microcontroller, or a Pi that sleeps between moves, fixes that.
 - **Solar farm:** single-axis trackers gain about 15 to 25% in sunny regions (5 to 10% where it is cloudy) and spend about 1% or less of their output on moving. In large scale solar farms, the cost of this pays off
