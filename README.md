@@ -100,12 +100,18 @@ npm test                 # logic checks
 vercel --prod
 ```
 
-Set `DATABASE_URL` (Neon) and `INGEST_SECRET` in Vercel and in `web/.env` (see `web/.env.example`). API routes: `/api/ingest` (POST, secret required), `/api/latest`, `/api/energy-history`, `/api/ab`, `/api/export`.
+Set `DATABASE_URL` (Neon) and `INGEST_SECRET` in Vercel and in `web/.env` (see `web/.env.example`). API routes: `/api/ingest` (POST, secret required), `/api/latest`, `/api/replay`, `/api/energy-history`, `/api/ab`, `/api/export`.
 
 ## Repo layout
 
-- `pi/` - sensing, control, logging and the sender
-- `web/` - Vercel dashboard, API routes and Neon schema
+- `pi/` - sensing, control, logging and the sender, plus the local `energy_history.db`
+- `web/` - everything for the dashboard
+  - `public/` - the deployed site (`index.html`, `build.html`, `site.css`, `img/`)
+  - `api/` - Vercel API routes
+  - `scripts/` - Neon schema, migration and seed
+  - `app.py`, `index.html`, `helios_logo.png` - the local Flask dashboard that reads `pi/energy_history.db`
+- `pics/` - build photos
+- `.gitignore` - covers the whole repo
 
 ## Credits
 
