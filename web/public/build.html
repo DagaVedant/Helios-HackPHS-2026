@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light">
+    <meta name="theme-color" content="#cfe6fa">
+    <meta name="description" content="How Helios is built: the parts and the wiring.">
+
+    <title>How Helios Is Built</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Caveat:wght@500&family=Manrope:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/site.css?v=8">
+
+    <style>
+        .lockup-link { text-decoration: none; color: inherit; }
+        h1.page { font: 800 clamp(2.6rem, 6vw, 4.5rem)/1 var(--display); letter-spacing: -0.03em; }
+        .lede { max-width: 44ch; margin-top: 16px; color: var(--muted); font-size: 1.125rem; }
+
+        .top { display: grid; grid-template-columns: 1fr 2.2fr; gap: 6vw; align-items: start; padding-top: 24px; padding-bottom: 8px; }
+
+        h2.big-h { font-size: 1.75rem; letter-spacing: -0.02em; }
+        .parts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 36px 48px; margin-top: 28px; }
+        .parts h3 { font-size: 1.0625rem; font-weight: 700; }
+        .parts .where { font: 700 0.75rem var(--body); color: var(--sun); margin-top: 2px; font-variant-numeric: tabular-nums; }
+        .parts p { margin-top: 6px; color: var(--muted); font-size: 0.9375rem; max-width: 38ch; }
+
+        .wiring-wrap { margin-top: 24px; overflow-x: auto; }
+        .wiring-wrap img { display: block; width: 100%; min-width: 900px; height: auto; background: #fff; box-shadow: 0 10px 30px rgba(11, 29, 58, 0.18); }
+        .wiring-cap { margin-top: 12px; }
+
+        .pins { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0 6vw; margin-top: 24px; }
+        .pins div { display: flex; justify-content: space-between; gap: 16px; padding: 7px 0; }
+        .pins dt { color: var(--muted); }
+        .pins dd { font-weight: 700; text-align: right; }
+
+        .loop { display: grid; grid-template-columns: 1fr 1.4fr; gap: 6vw; align-items: start; }
+        .loop p { color: var(--muted); max-width: 52ch; }
+        .loop p + p { margin-top: 12px; }
+        .nums { display: flex; flex-wrap: wrap; gap: 20px 44px; margin-top: 24px; }
+        .nums dt { font-size: 0.75rem; color: var(--muted); }
+        .nums dd { font: 800 1.75rem/1.1 var(--display); }
+
+        @media (max-width: 800px) {
+            .top, .loop { grid-template-columns: 1fr; gap: 36px; }
+            .parts, .pins { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+
+<body>
+    <a href="#main" class="skip">Skip to content</a>
+
+    <div id="loader" role="status" aria-live="polite">
+        <img src="./helios_logo.png?v=2" alt="" width="56" height="56">
+        <p>the wifi is selling</p>
+    </div>
+
+    <div class="wrap">
+        <header class="site-header">
+            <div>
+                <a href="/" class="lockup-link" aria-label="Helios, back to the dashboard">
+                    <div class="lockup" aria-hidden="true">HELI<img src="./helios_logo.png?v=2" alt="" width="44" height="44">S</div>
+                </a>
+                <p class="intro">A solar panel that <em>turns toward the light</em>.</p>
+            </div>
+            <div class="head-links">
+                <a href="/">Back to the dashboard</a>
+            </div>
+        </header>
+
+        <main id="main">
+            <section class="top" aria-label="Overview">
+                <div>
+                    <h1 class="page">How it's built</h1>
+                    <p class="lede">Four light sensors sit around the panel. A Raspberry Pi compares them and turns the panel on two axes toward whichever side is brighter.</p>
+                    <p class="note" style="margin-top:18px; transform: rotate(-1deg);">yes, the wiring is that messy</p>
+                </div>
+                <div class="photos">
+                    <figure>
+                        <img src="/img/build-blue.jpg" alt="The tracker with a blue base, solar panel on top and loose jumper wires on the table" width="675" height="1200">
+                        <figcaption class="note">blue base, wires everywhere</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="/img/build-black.jpg" alt="The tracker with a black base, partway through assembly, next to a glue gun" width="900" height="1200">
+                        <figcaption class="note">black base, mid-build</figcaption>
+                    </figure>
+                </div>
+            </section>
+
+            <section aria-label="Parts">
+                <h2 class="big-h">What's in it</h2>
+                <div class="parts">
+                    <div>
+                        <h3>Four light sensors</h3>
+                        <p class="where">GL5528 LDR x4, ADS1115 at 0x48</p>
+                        <p>The eyes</p>
+                    </div>
+                    <div>
+                        <h3>Two servos</h3>
+                        <p class="where">MG90S x2, GPIO 12 and GPIO 13</p>
+                        <p>Moves it</p>
+                    </div>
+                    <div>
+                        <h3>Power meter</h3>
+                        <p class="where">INA219 at 0x40</p>
+                        <p>Watts</p>
+                    </div>
+                    <div>
+                        <h3>Controller</h3>
+                        <p class="where">Raspberry Pi 5</p>
+                        <p>The brain</p>
+                    </div>
+                    <div>
+                        <h3>Power module</h3>
+                        <p class="where">MB102 on a 9 V adapter</p>
+                        <p>Power</p>
+                    </div>
+                    <div>
+                        <h3>Display</h3>
+                        <p class="where">SSD1306 OLED at 0x3C</p>
+                        <p>Readout</p>
+                    </div>
+                </div>
+            </section>
+
+            <section aria-label="Wiring diagram">
+                <h2 class="big-h">Wiring</h2>
+                <div class="wiring-wrap" tabindex="0" role="group" aria-label="Wiring diagram, scrolls sideways on small screens">
+                    <img src="/img/wiring.png" alt="Breadboard wiring diagram: the Raspberry Pi 5 header on the bottom, the MB102 power module on the left, the ADS1115 and INA219 on the breadboard, the five buttons, the two servos on top and the four light sensors, OLED and solar panel on the right." width="2150" height="941" loading="lazy">
+                </div>
+                <p class="note wiring-cap">top rails are 5 V for the servos, bottom rails are 3.3 V for everything else</p>
+            </section>
+        </main>
+
+        <footer>
+            <p>Made by Vedant Daga, Nethra Ramkumar, Saicharan Kankanala, and Saanvika Govindaraj.</p>
+            <p><a href="https://github.com/DagaVedant/Helios-HackPHS-2026">github.com/DagaVedant/Helios-HackPHS-2026</a></p>
+        </footer>
+    </div>
+    <script>
+        // "the wifi is selling" screen: leave once the page has loaded (never before 1.4 s)
+        const shownAt = Date.now();
+        const leave = () => setTimeout(() => document.getElementById("loader").classList.add("done"), Math.max(0, 1400 - (Date.now() - shownAt)));
+        if (document.readyState === "complete") leave(); else window.addEventListener("load", leave);
+        setTimeout(leave, 8000);
+    </script>
+</body>
+</html>

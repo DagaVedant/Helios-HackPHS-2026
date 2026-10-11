@@ -4,538 +4,153 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="color-scheme" content="light">
-    <meta name="theme-color" content="#f7f1e3">
+    <meta name="theme-color" content="#cfe6fa">
+    <meta name="description" content="Helios: a solar panel that turns toward the light, and its readings.">
 
     <title>Helios Dashboard</title>
 
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-
-    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <!-- Inter font for the HELIOS wordmark -->
-    <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700;900&display=swap"
-        rel="stylesheet"
-    >
+    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Caveat:wght@500&family=Manrope:wght@400;500;700&display=swap" rel="stylesheet">
 
-    <style>
-        body {
-            background: #f7f1e3;
-            color: #243047;
-            font-family: "Inter", system-ui, -apple-system, sans-serif;
-        }
-
-        :focus-visible { outline: 2px solid #c47b1b; outline-offset: 2px; }
-        .font-mono, dd { font-variant-numeric: tabular-nums; }
-        h1, h2 { text-wrap: balance; }
-        @media (prefers-reduced-motion: reduce) {
-            *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
-        }
-
-        .grid-blur {
-            background-color: rgba(255, 252, 245, 0.72);
-        }
-
-        main > div:nth-child(1) .text-white {
-            color: #9b3f2f !important;
-        }
-
-        main > div:nth-child(1) {
-            outline: 3px solid #d97745;
-            outline-offset: -1px;
-        }
-
-        main > div:nth-child(2) {
-            outline: 3px solid #c47b1b;
-            outline-offset: -1px;
-        }
-
-        main > div:nth-child(3) {
-            outline: 3px solid #c47b1b;
-            outline-offset: -1px;
-        }
-
-        main + section > div {
-            outline: 3px solid #c47b1b;
-            outline-offset: -1px;
-        }
-
-        main + section + section > div {
-            outline: 3px solid #c47b1b;
-            outline-offset: -1px;
-        }
-
-        main + section + section + section > div {
-            outline: 3px solid #c47b1b;
-            outline-offset: -1px;
-        }
-
-        main > div:nth-child(1) #volts {
-            color: #4169a1 !important;
-        }
-
-        main > div:nth-child(1) #amps {
-            color: #4169a1 !important;
-        }
-
-        main > div:nth-child(3) strong {
-            color: #5e6eb0 !important;
-        }
-
-        [class*="bg-slate-9"],
-        [class*="bg-slate-950"],
-        [class*="bg-slate-8"] {
-            background-color: #fffaf0 !important;
-        }
-
-        [class*="border-slate-"] {
-            border-color: #ded4c2 !important;
-        }
-
-        [class*="text-slate-"] {
-            color: #687386 !important;
-        }
-
-        .text-white,
-        .text-slate-200 {
-            color: #243047 !important;
-        }
-
-        [class*="text-amber-"] {
-            color: #a86412 !important;
-        }
-
-        #history-total,
-        #history-window,
-        #history-samples {
-            color: #4169a1 !important;
-        }
-
-        .bg-amber-500 {
-            background-color: #c47b1b !important;
-        }
-
-        .bg-amber-500\/10 {
-            background-color: #f5e6c9 !important;
-        }
-
-        .border-amber-500\/20 {
-            border-color: #e7c78f !important;
-        }
-
-        .bg-emerald-950\/80 {
-            background-color: #dcefe7 !important;
-        }
-
-        .text-emerald-400 {
-            color: #087653 !important;
-        }
-
-        .bg-red-950\/80 {
-            background-color: #f8dfdc !important;
-        }
-
-        .text-red-400 {
-            color: #b43f35 !important;
-        }
-
-        .brand-logo {
-            width: 64px;
-            height: 64px;
-            object-fit: contain;
-            flex: 0 0 auto;
-        }
-
-        .helios-wordmark {
-            font-family: "Inter", system-ui, sans-serif;
-        }
-
-        .system-status {
-            position: absolute;
-            right: 3rem;
-            top: 1.5rem;
-        }
-
-        .site-subtitle {
-            position: absolute;
-            right: 3rem;
-            top: 4.9rem;
-            text-align: right;
-        }
-
-        .brand-lockup {
-            position: absolute;
-            left: 50%;
-            top: 50%;
-            transform: translate(-50%, -50%);
-            gap: 0.25rem;
-        }
-
-        .site-header {
-            min-height: 122px;
-        }
-
-        @media (max-width: 767px) {
-            .site-header {
-                min-height: 190px;
-            }
-
-            .system-status {
-                top: auto;
-                bottom: 0.5rem;
-                right: 50%;
-                transform: translateX(50%);
-                align-items: center;
-            }
-
-            .site-subtitle {
-                right: 1.5rem;
-            }
-        }
-
-
-        .rig-stage { width: 260px; height: 240px; margin: 0 auto; perspective: 800px; position: relative;
-                     user-select: none; border-radius: 8px; }
-        .rig { position: absolute; inset: 0; transform-style: preserve-3d; transition: transform 0.25s linear; }
-        .rig > img { position: absolute; display: block; pointer-events: none; }
-        .rig-panel { left: 45px; top: 69px; width: 170px; height: 102px; box-shadow: 0 0 0 3px #b8bec8; border-radius: 1px; }
-        .rig-ldr { width: 22px; height: 38px; transition: opacity 0.2s; }
-        .rig-ldr-top    { left: 119px; top: 31px; transform: rotate(180deg); }
-        .rig-ldr-bottom { left: 119px; top: 171px; }
-        .rig-ldr-left   { left: 15px;     top: 101px; transform: rotate(90deg); }
-        .rig-ldr-right  { left: 223px; top: 101px; transform: rotate(-90deg); }
-        .ldr-tag { position: absolute; font: 600 12px ui-monospace, monospace; font-variant-numeric: tabular-nums;
-                   color: #243047; background: #fdf8ec; border: 1px solid #c9b48a; border-radius: 4px;
-                   padding: 1px 5px; pointer-events: none; }
-        .ldr-tag-left   { left: 6px;   top: 136px; }
-        .ldr-tag-right  { left: 213px; top: 136px; }
-        .ldr-tag-top    { left: 150px; top: 36px; }
-        .ldr-tag-bottom { left: 150px; top: 176px; }
-        .ldr-readout { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; text-align: center; }
-        .ldr-readout dt { font-size: 11px; color: #687386; }
-        .ldr-readout dd { margin: 0; font: 600 14px ui-monospace, monospace; font-variant-numeric: tabular-nums; color: #243047; }
-        .ldr-readout > div { padding: 4px 0; border-bottom: 2px solid transparent; }
-        .ldr-readout > div.quadrant-bright { border-bottom-color: #9b3f2f; }
-        @media (prefers-reduced-motion: reduce) { .rig { transition: none; } }
-    </style>
+    <link rel="stylesheet" href="/site.css?v=8">
 </head>
 
-<body class="min-h-screen flex flex-col justify-between">
-    <a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:bg-white focus:px-3 focus:py-2 focus:z-50">Skip to content</a>
+<body>
+    <a href="#main" class="skip">Skip to content</a>
 
-    <!-- Header -->
-    <header
-        class="site-header relative w-full px-6 md:px-12 py-6 mb-8 border-b border-slate-800/60 flex flex-col items-center"
-    >
-        <h1 class="sr-only">Helios solar tracker</h1>
-        <div class="brand-lockup flex items-center gap-0" aria-hidden="true">
-            <span aria-hidden="true"
-                class="helios-wordmark text-[4.5rem] font-bold tracking-wider text-amber-400"
-            >
-                HELI
-            </span>
+    <div id="loader" role="status" aria-live="polite">
+        <img src="./helios_logo.png?v=2" alt="" width="56" height="56">
+        <p>the wifi is selling</p>
+    </div>
 
-            <img
-                class="brand-logo"
-                src="./helios_logo.png?v=2"
-                alt="O in HELIOS solar tracker wordmark"
-            >
-
-            <span aria-hidden="true"
-                class="helios-wordmark text-[4.5rem] font-bold tracking-wider text-amber-400"
-            >
-                S
-            </span>
-        </div>
-
-        <div class="system-status flex flex-col items-end gap-1">
-            <span
-                id="status-badge" aria-live="polite"
-                class="px-2.5 py-0.5 rounded-md text-xs font-black bg-slate-900 text-slate-400 border border-slate-800/40 tracking-wider"
-            >
-                CONNECTING
-            </span>
-            <span id="last-seen" class="text-xs text-slate-500 font-mono"></span>
-            <a
-                href="/api/export"
-                class="text-xs font-medium text-slate-500 hover:text-amber-700 underline"
-            >
-                Download CSV
-            </a>
-        </div>
-    </header>
-
-    <!-- Main Dashboard -->
-    <main id="main" class="w-full max-w-5xl mx-auto px-6 md:px-0 grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 flex-grow">
-
-        <!-- Power Generation Card -->
-        <div
-            class="md:col-span-2 bg-slate-900/40 border border-slate-800/60 rounded-2xl p-6 flex flex-col justify-between grid-blur"
-        >
+    <div class="wrap">
+        <header class="site-header">
             <div>
-                <div class="flex justify-between items-center mb-4">
-                    <h2
-                        class="text-sm font-semibold text-slate-700"
-                    >
-                        Calculated Net Generation
-                    </h2>
-
-                </div>
-
-                <div class="flex items-baseline gap-2 mt-2">
-                    <span
-                        id="watts"
-                        class="text-7xl font-black text-white tracking-tighter"
-                    >
-                        0.00
-                    </span>
-
-                    <span
-                        class="text-3xl font-extrabold text-amber-400 tracking-wide"
-                    >
-                        W
-                    </span>
-                </div>
+                <h1 class="sr-only">Helios solar tracker</h1>
+                <div class="lockup" aria-hidden="true">HELI<img src="./helios_logo.png?v=2" alt="" width="44" height="44">S</div>
+                <p class="intro">A solar panel that <em>turns toward the light</em>. These are its readings.</p>
             </div>
-
-            <!-- Electrical Measurements -->
-            <div
-                class="grid grid-cols-2 gap-4 mt-8 pt-6 border-t border-slate-800/60"
-            >
-                <div
-                    class="bg-slate-950/40 rounded-xl p-3 border border-slate-900/60 text-center"
-                >
-                    <p
-                        class="text-xs text-slate-500 font-medium mb-1"
-                    >
-                        Voltage
-                    </p>
-
-                    <p
-                        id="volts"
-                        class="text-xl font-mono font-bold text-slate-200"
-                    >
-                        0.0
-                    </p>
-                </div>
-
-                <div
-                    class="bg-slate-950/40 rounded-xl p-3 border border-slate-900/60 text-center"
-                >
-                    <p
-                        class="text-xs text-slate-500 font-medium mb-1"
-                    >
-                        Current
-                    </p>
-
-                    <p
-                        id="amps"
-                        class="text-xl font-mono font-bold text-slate-200"
-                    >
-                        0
-                    </p>
-                </div>
+            <div class="head-links">
+                <span id="status-badge" aria-live="polite" class="badge" style="display:none"></span>
+                <span id="last-seen" class="small muted"></span>
+                <a href="/build.html" class="build-link">How it's built</a>
+                <a href="/api/export">Download the data (CSV)</a>
             </div>
-        </div>
+        </header>
 
-        <!-- Light Sensors Card -->
-        <div
-            class="bg-slate-900/40 border border-slate-800/60 rounded-2xl p-6 flex flex-col items-center justify-between grid-blur"
-        >
-            <div class="w-full flex justify-between items-center mb-4">
-                <h2
-                    class="text-sm font-semibold text-slate-700"
-                >
-                    Light Sensors
-                </h2>
-
-            </div>
-
-            <!-- Solar panel with four LDRs. Follows the pan bar. -->
-            <div id="rig-stage" class="rig-stage" role="img"
-                 aria-label="Solar panel and its four light sensors, turning with the mount's pan angle.">
-                <div id="rig" class="rig">
-                    <img class="rig-panel" src="/img/panel.jpg" alt="Solar panel" width="170" height="102" draggable="false">
-                    <img class="rig-ldr rig-ldr-left"   data-ldr="v1" src="/img/ldr.png" alt="" width="22" height="38" draggable="false">
-                    <img class="rig-ldr rig-ldr-right"  data-ldr="v2" src="/img/ldr.png" alt="" width="22" height="38" draggable="false">
-                    <img class="rig-ldr rig-ldr-top"    data-ldr="v3" src="/img/ldr.png" alt="" width="22" height="38" draggable="false">
-                    <img class="rig-ldr rig-ldr-bottom" data-ldr="v4" src="/img/ldr.png" alt="" width="22" height="38" draggable="false">
-                    <span class="ldr-tag ldr-tag-left" data-tag="v1" aria-hidden="true">0</span>
-                    <span class="ldr-tag ldr-tag-right" data-tag="v2" aria-hidden="true">0</span>
-                    <span class="ldr-tag ldr-tag-top" data-tag="v3" aria-hidden="true">0</span>
-                    <span class="ldr-tag ldr-tag-bottom" data-tag="v4" aria-hidden="true">0</span>
-                </div>
-            </div>
-            <dl class="ldr-readout w-full mt-3">
-                <div><dt>Left</dt><dd id="v1">0</dd></div>
-                <div><dt>Right</dt><dd id="v2">0</dd></div>
-                <div><dt>Top</dt><dd id="v3">0</dd></div>
-                <div><dt>Bottom</dt><dd id="v4">0</dd></div>
-            </dl>
-
-        </div>
-
-        <!-- Mount Angle Card -->
-        <div
-            class="md:col-span-3 bg-slate-900/40 border border-slate-800/60 rounded-2xl p-6 grid-blur"
-        >
-            <div class="flex justify-between items-center mb-5">
-                <h2
-                    class="text-sm font-semibold text-slate-700"
-                >
-                    Live Mount Angle
-                </h2>
-
-            </div>
-
-            <div class="grid grid-cols-1 gap-5">
-                <div class="bg-slate-950/50 rounded-xl p-4 border border-slate-800/60">
-                    <div class="flex justify-between items-center mb-3">
-                        <span class="text-xs text-slate-500 font-medium">
-                            Pan / Azimuth
-                        </span>
-                        <strong id="pan-angle" class="text-amber-400 font-mono text-lg">
-                            90.0°
-                        </strong>
+        <main id="main">
+            <section class="hero" aria-label="Live readings">
+                <div class="hero-left">
+                    <h2>Power right now</h2>
+                    <div class="big">
+                        <span id="watts" class="num">0.00</span><span class="unit">W</span>
                     </div>
-                    <div class="h-3 rounded-full bg-slate-800 overflow-hidden">
-                        <div
-                            id="pan-bar"
-                            class="h-full rounded-full bg-amber-500 transition-[width] duration-[250ms] ease-linear"
-                            style="width: 50%"
-                        ></div>
-                    </div>
-                    <div class="flex justify-between mt-2 text-xs text-slate-600 font-mono">
-                        <span>0° LEFT</span>
-                        <span>180° RIGHT</span>
+                    <p class="vi"><span><b id="volts">0.0V</b> volts</span><span><b id="amps">0mA</b> current</span></p>
+
+                    <div class="pan">
+                        <div class="pan-head">
+                            <h2>Panel turn</h2>
+                            <strong id="pan-angle">90°</strong>
+                        </div>
+                        <div class="track"><div id="pan-bar" style="width: 50%"></div></div>
+                        <div class="pan-ends small muted"><span>0° left</span><span>180° right</span></div>
                     </div>
                 </div>
-            </div>
-        </div>
 
-    </main>
-
-    <!-- Real-Time Efficiency Chart -->
-    <section
-        class="w-full max-w-5xl mx-auto px-6 md:px-0"
-    >
-        <div class="bg-slate-900/30 border border-slate-800/50 rounded-2xl p-6 mb-8 grid-blur">
-        <div class="flex justify-between items-center mb-6">
-            <div>
-                <h2
-                    class="text-sm font-semibold text-slate-700"
-                >
-                    Real-Time Efficiency Timeline
-                </h2>
-            </div>
-
-        </div>
-
-        <div class="h-44">
-            <canvas id="wattChart"></canvas>
-        </div>
-        </div>
-    </section>
-
-    <!-- A/B gain test -->
-    <section class="w-full max-w-5xl mx-auto px-6 md:px-0">
-        <div class="bg-slate-900/30 border border-slate-800/50 rounded-2xl p-6 mb-8 grid-blur">
-            <h2 class="text-sm font-semibold text-slate-700 mb-4">
-                Tracking Gain Test
-            </h2>
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div class="rounded-lg border border-slate-800/60 bg-slate-950/30 p-3">
-                    <p class="text-xs text-slate-500 font-medium">Fixed at home</p>
-                    <p id="ab-fixed" class="text-lg font-mono font-bold text-slate-200">--</p>
+                <div class="rig-wrap">
+                    <h2>Where the lamp is</h2>
+                    <div id="rig-stage" class="rig-stage" role="img"
+                         aria-label="Solar panel and its four light sensors, turning with the mount's pan angle.">
+                        <div id="rig" class="rig">
+                            <img class="rig-panel" src="/img/panel.jpg" alt="" width="170" height="102" draggable="false">
+                            <img class="rig-ldr rig-ldr-left"   data-ldr="v1" src="/img/ldr.png" alt="" width="22" height="38" draggable="false">
+                            <img class="rig-ldr rig-ldr-right"  data-ldr="v2" src="/img/ldr.png" alt="" width="22" height="38" draggable="false">
+                            <img class="rig-ldr rig-ldr-top"    data-ldr="v3" src="/img/ldr.png" alt="" width="22" height="38" draggable="false">
+                            <img class="rig-ldr rig-ldr-bottom" data-ldr="v4" src="/img/ldr.png" alt="" width="22" height="38" draggable="false">
+                            <span class="ldr-tag ldr-tag-left" data-tag="v1" aria-hidden="true">0</span>
+                            <span class="ldr-tag ldr-tag-right" data-tag="v2" aria-hidden="true">0</span>
+                            <span class="ldr-tag ldr-tag-top" data-tag="v3" aria-hidden="true">0</span>
+                            <span class="ldr-tag ldr-tag-bottom" data-tag="v4" aria-hidden="true">0</span>
+                        </div>
+                    </div>
+                    <dl class="ldr-readout">
+                        <div><dt>Left</dt><dd id="v1">0</dd></div>
+                        <div><dt>Right</dt><dd id="v2">0</dd></div>
+                        <div><dt>Top</dt><dd id="v3">0</dd></div>
+                        <div><dt>Bottom</dt><dd id="v4">0</dd></div>
+                    </dl>
+                    <p class="note" style="margin-top:10px; transform: rotate(-1.5deg);">brightest sensor gets the underline</p>
                 </div>
-                <div class="rounded-lg border border-slate-800/60 bg-slate-950/30 p-3">
-                    <p class="text-xs text-slate-500 font-medium">Tracking</p>
-                    <p id="ab-tracking" class="text-lg font-mono font-bold text-slate-200">--</p>
-                </div>
-                <div class="rounded-lg border border-slate-800/60 bg-slate-950/30 p-3">
-                    <p class="text-xs text-slate-500 font-medium">Gain</p>
-                    <p id="ab-gain" class="text-lg font-mono font-bold text-amber-400">--</p>
-                </div>
-            </div>
-        </div>
-    </section>
+            </section>
 
-    <!-- Energy History -->
-    <section
-        class="w-full max-w-5xl mx-auto px-6 md:px-0"
-    >
-        <div class="bg-slate-900/30 border border-slate-800/50 rounded-2xl p-6 mb-8 grid-blur">
-            <div class="flex flex-col sm:flex-row justify-between gap-4 mb-6">
-                <div>
-                    <h2 class="text-sm font-semibold text-slate-700">
-                        Energy Generation History
-                    </h2>
-                </div>
+            <div class="split">
+            <section aria-label="Power over the last 45 seconds">
+                <h2>Power, last 45 seconds</h2>
+                <div class="chart-live"><canvas id="wattChart" role="img" aria-label="Line chart of panel power over the last 45 seconds"></canvas></div>
+            </section>
 
-                <div class="flex items-center gap-2">
-                    <label for="history-range" class="text-xs text-slate-500 font-medium">
-                        Time range
-                    </label>
-                    <select
-                        id="history-range"
-                        class="bg-slate-950/50 border border-slate-800/60 rounded-md px-2 py-1 text-xs text-slate-600"
-                    >
-                        <option value="1h">Last hour</option>
-                        <option value="6h">Last 6 hours</option>
-                        <option value="24h" selected>Last 24 hours</option>
-                        <option value="7d">Last 7 days</option>
-                        <option value="month">Last month</option>
-                        <option value="all">All time</option>
-                    </select>
-                    <select
-                        id="history-view"
-                        class="bg-slate-950/50 border border-slate-800/60 rounded-md px-2 py-1 text-xs text-slate-600"
-                    >
-                        <option value="cumulative" selected>Cumulative energy</option>
-                        <option value="average">Average by time of day</option>
-                    </select>
-                    <select
-                        id="time-of-day-range"
-                        class="hidden bg-slate-950/50 border border-slate-800/60 rounded-md px-2 py-1 text-xs text-slate-600"
-                    >
-                        <option value="full-day" selected>Full day</option>
-                        <option value="night">Night, 12-6 AM</option>
-                        <option value="morning">Morning, 6 AM-12 PM</option>
-                        <option value="midday">Midday, 9 AM-3 PM</option>
-                        <option value="afternoon">Afternoon, 12-6 PM</option>
-                        <option value="evening">Evening, 6 PM-12 AM</option>
-                    </select>
-                </div>
+            <section class="test" aria-label="Tracking versus a fixed panel">
+                <h2>Tracking vs. a fixed panel</h2>
+                <p class="lead">Tracking gave <b id="ab-gain">--</b> <span id="ab-word">more</span> power than a fixed panel in the same light.</p>
+                <p class="small muted">Fixed at home: <span id="ab-fixed" class="num">--</span>. Tracking: <span id="ab-tracking" class="num">--</span>.</p>
+            </section>
+
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
-                <div class="rounded-lg border border-slate-800/60 bg-slate-950/30 p-3">
-                    <p class="text-xs text-slate-500 font-medium">Total since start</p>
-                    <p id="history-total" class="text-lg font-mono font-bold text-amber-400">0.000 Wh</p>
+            <section aria-label="Energy history">
+                <div class="hist-top">
+                    <h2>Energy over time</h2>
+                    <div class="controls">
+                        <label for="history-range">Range</label>
+                        <select id="history-range">
+                            <option value="1h">Last hour</option>
+                            <option value="6h">Last 6 hours</option>
+                            <option value="24h" selected>Last 24 hours</option>
+                            <option value="7d">Last 7 days</option>
+                            <option value="month">Last month</option>
+                            <option value="all">All time</option>
+                        </select>
+                        <label for="history-view" class="sr-only">View</label>
+                        <select id="history-view">
+                            <option value="cumulative" selected>Cumulative energy</option>
+                            <option value="average">Average by time of day</option>
+                        </select>
+                        <label for="time-of-day-range" class="sr-only">Time of day</label>
+                        <select id="time-of-day-range" class="hidden">
+                            <option value="full-day" selected>Full day</option>
+                            <option value="night">Night, 12-6 AM</option>
+                            <option value="morning">Morning, 6 AM-12 PM</option>
+                            <option value="midday">Midday, 9 AM-3 PM</option>
+                            <option value="afternoon">Afternoon, 12-6 PM</option>
+                            <option value="evening">Evening, 6 PM-12 AM</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="rounded-lg border border-slate-800/60 bg-slate-950/30 p-3">
-                    <p class="text-xs text-slate-500 font-medium">Selected window</p>
-                    <p id="history-window" class="text-lg font-mono font-bold text-teal-700">0.000 Wh</p>
-                </div>
-                <div class="rounded-lg border border-slate-800/60 bg-slate-950/30 p-3">
-                    <p class="text-xs text-slate-500 font-medium">Samples</p>
-                    <p id="history-samples" class="text-lg font-mono font-bold text-indigo-700">0</p>
-                </div>
-            </div>
 
-            <p id="history-empty" hidden class="text-xs text-slate-500 mb-2">No samples fall inside this window.</p>
-            <div class="h-52">
-                <canvas id="energyHistoryChart" role="img" aria-label="Chart of energy generated over the selected period"></canvas>
-            </div>
-        </div>
-    </section>
+                <dl class="stats">
+                    <div><dt>Total since start</dt><dd id="history-total" class="sun">0.000 Wh</dd></div>
+                    <div><dt>This window</dt><dd id="history-window">0.000 Wh</dd></div>
+                    <div><dt>Samples</dt><dd id="history-samples">0</dd></div>
+                </dl>
 
-    <!-- Dashboard JavaScript -->
+                <p id="history-empty" hidden class="small muted" style="margin-top:14px">Waiting for the first reading in this window.</p>
+                <div class="chart-hist"><canvas id="energyHistoryChart" role="img" aria-label="Chart of energy generated over the selected period"></canvas></div>
+            </section>
+        </main>
+
+        <footer>
+            <p>Made by Vedant Daga, Nethra Ramkumar, Saicharan Kankanala, and Saanvika Govindaraj.</p>
+            <p><a href="https://github.com/DagaVedant/Helios-HackPHS-2026">github.com/DagaVedant/Helios-HackPHS-2026</a></p>
+        </footer>
+    </div>
+
     <script>
+        Chart.defaults.font.family = '"Manrope", system-ui, sans-serif';
+        Chart.defaults.font.size = 12;
+
         // Initialize the chart canvas.
         const ctx = document
             .getElementById("wattChart")
@@ -552,29 +167,12 @@
                 {
                     label: "Panel power",
                     data: Array(maxDataPoints).fill(0),
-                    borderColor: "#2f806f",
-                    borderWidth: 2.5,
-                    backgroundColor: "rgba(47, 128, 111, 0.10)",
+                    borderColor: "#b25e00",
+                    borderWidth: 2,
+                    backgroundColor: "rgba(178, 94, 0, 0.08)",
                     fill: false,
                     tension: 0.25,
-                    pointRadius: 2,
-                    pointBackgroundColor: "#7187c8",
-                    segment: {
-                        borderColor: (context) => {
-                            const start = context.p0.parsed.y;
-                            const end = context.p1.parsed.y;
-
-                            if (end > start) {
-                                return "#2f806f";
-                            }
-
-                            if (end < start) {
-                                return "#d97745";
-                            }
-
-                            return "#7187c8";
-                        }
-                    }
+                    pointRadius: 0,
                 }
             ]
         };
@@ -600,37 +198,36 @@
                         display: true,
                         title: {
                             display: true,
-                            text: "Elapsed time (seconds)",
-                            color: "#687386"
+                            text: "Seconds ago",
+                            color: "#3f5a82"
                         },
                         ticks: {
-                            color: "#687386",
+                            color: "#3f5a82",
                             autoSkip: false,
                             maxRotation: 0,
                             callback: (value, index) => {
-                                const label = chartData.labels[index];
-                                return index % 5 === 0 && label
-                                    ? label + "s"
-                                    : "";
+                                const ago = chartData.labels.length - 1 - index;
+                                if (index % 5 !== 0 && ago !== 0) return "";
+                                return ago === 0 ? "now" : "-" + ago + "s";
                             }
                         },
                         grid: {
-                            color: "rgba(104, 115, 134, 0.15)"
+                            color: "rgba(63, 90, 130, 0.14)"
                         }
                     },
 
                     y: {
                         title: {
                             display: true,
-                            text: "Power (W)",
-                            color: "#687386"
+                            text: "Watts",
+                            color: "#3f5a82"
                         },
                         grid: {
-                            color: "rgba(104, 115, 134, 0.25)"
+                            color: "rgba(63, 90, 130, 0.2)"
                         },
 
                         ticks: {
-                            color: "#687386"
+                            color: "#3f5a82"
                         },
 
                         beginAtZero: true,
@@ -651,13 +248,12 @@
                 datasets: [{
                     label: "Energy generated",
                     data: [],
-                    borderColor: "#7187c8",
-                    backgroundColor: "rgba(113, 135, 200, 0.10)",
-                    borderWidth: 2.5,
+                    borderColor: "#0b5cab",
+                    backgroundColor: "rgba(11, 92, 171, 0.10)",
+                    borderWidth: 2,
                     fill: true,
                     tension: 0.25,
-                    pointRadius: 2,
-                    pointBackgroundColor: "#d97745"
+                    pointRadius: 0
                 }]
             },
             options: {
@@ -671,29 +267,29 @@
                         title: {
                             display: true,
                             text: "Time of day",
-                            color: "#687386"
+                            color: "#3f5a82"
                         },
                         ticks: {
-                            color: "#687386",
+                            color: "#3f5a82",
                             maxTicksLimit: 8
                         },
                         grid: {
-                            color: "rgba(104, 115, 134, 0.15)"
+                            color: "rgba(63, 90, 130, 0.14)"
                         }
                     },
                     y: {
                         title: {
                             display: true,
                             text: "Energy generated (Wh)",
-                            color: "#687386"
+                            color: "#3f5a82"
                         },
                         beginAtZero: true,
                         ticks: {
-                            color: "#687386",
+                            color: "#3f5a82",
                             callback: (value) => value.toFixed(3) + " Wh"
                         },
                         grid: {
-                            color: "rgba(104, 115, 134, 0.25)"
+                            color: "rgba(63, 90, 130, 0.2)"
                         }
                     }
                 }
@@ -832,10 +428,9 @@
         }, 10000);
 
         // Poll the Vercel API once a second (replaces the Flask event stream).
-        const BADGE_BASE = "px-2.5 py-0.5 rounded-md text-xs font-black tracking-wider ";
-        const BADGE_OK = BADGE_BASE + "bg-emerald-950/80 text-emerald-400 border border-emerald-500/30";
-        const BADGE_WARN = BADGE_BASE + "bg-amber-950/80 text-amber-400 border border-amber-500/30";
-        const BADGE_OFF = BADGE_BASE + "bg-red-950/80 text-red-400 border border-red-500/30";
+        const BADGE_OK = "badge ok";
+        const BADGE_WARN = "badge warn";
+        const BADGE_OFF = "badge off";
 
         function setBadge(text, className) {
             const badge = document.getElementById("status-badge");
@@ -872,7 +467,7 @@
             document.getElementById("amps").innerText = Number(data.ma).toFixed(0) + "mA";
 
             const panAngle = Math.max(0, Math.min(180, Number(data.pan)));
-            document.getElementById("pan-angle").innerText = panAngle.toFixed(1) + "°";
+            document.getElementById("pan-angle").innerText = panAngle.toFixed(0) + "°";
             document.getElementById("pan-bar").style.width = (panAngle / 180 * 100) + "%";
 
             // data.tilt is the mount's 15-85 deg elevation (+45 offset); lay the panel back as it lowers
@@ -897,6 +492,16 @@
             updateQuadrantUI("v3", data.l3, brightest);
             updateQuadrantUI("v4", data.l4, brightest);
         }
+
+        // "the wifi is selling" screen: leave once the first reading is on the page (never before 1.4 s)
+        const loaderShownAt = Date.now();
+        function hideLoader() {
+            const el = document.getElementById("loader");
+            if (!el || el.dataset.done) return;
+            el.dataset.done = "1";
+            setTimeout(() => el.classList.add("done"), Math.max(0, 1400 - (Date.now() - loaderShownAt)));
+        }
+        setTimeout(hideLoader, 9000);
 
         function pushChartPoint(watts) {
             chartData.labels.push(((Date.now() - liveTimelineStart) / 1000).toFixed(0));
@@ -947,6 +552,7 @@
             for (const k of ["v", "ma", "w", "l1", "l2", "l3", "l4", "pan", "tilt"]) out[k] = mix(k);
             for (const k of ["l1", "l2", "l3", "l4"]) out[k] = Math.round(out[k]);
             applyTelemetry(out);
+            hideLoader();
             replayQuarter++;
             if (replayQuarter === 4) {
                 replayQuarter = 0;
@@ -975,6 +581,7 @@
             }
             stopReplay();
             applyTelemetry(data);
+            hideLoader();
             document.getElementById("last-seen").innerText = "";
             setBadge(data.status, data.status === "ALIGNED" ? BADGE_OK : BADGE_WARN);
 
@@ -992,10 +599,10 @@
                 if (!response.ok) return;
                 const ab = await response.json();
                 if (ab.empty) return;
-                document.getElementById("ab-fixed").innerText = ab.fixed_mw.toFixed(1) + " mW";
-                document.getElementById("ab-tracking").innerText = ab.tracking_mw.toFixed(1) + " mW";
-                document.getElementById("ab-gain").innerText =
-                    (ab.gain_pct >= 0 ? "+" : "") + ab.gain_pct.toFixed(1) + "%";
+                document.getElementById("ab-fixed").innerText = ab.fixed_mw.toFixed(0) + " mW";
+                document.getElementById("ab-tracking").innerText = ab.tracking_mw.toFixed(0) + " mW";
+                document.getElementById("ab-gain").innerText = Math.abs(ab.gain_pct).toFixed(0) + "%";
+                document.getElementById("ab-word").innerText = ab.gain_pct >= 0 ? "more" : "less";
             } catch (error) {
                 console.error(error);
             }
@@ -1006,6 +613,5 @@
         loadAbResult();
         setInterval(loadAbResult, 15000);
     </script>
-
 </body>
 </html>
