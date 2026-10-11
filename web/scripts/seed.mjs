@@ -30,6 +30,15 @@ export function generate({ endMs = Date.now(), seed = 7 } = {}) {
   const noise = (s) => (rand() * 2 - 1) * s;
   const startMs = endMs - (SECONDS - 1) * 1000;
 
+  // brightness steps to a new level every 15 s (a cloud, a hand, a dimmer), easing over 3 s
+  const levels = Array.from({ length: Math.ceil(SECONDS / 15) + 1 }, () => 0.62 + 0.55 * rand());
+  levels[0] = levels[1] = levels[2] = 1; // keep the opening A/B test window steady
+  const level = (t) => {
+    const k = Math.floor(t / 15);
+    const prev = k === 0 ? 1 : levels[k - 1];
+    return prev + (levels[k] - prev) * smooth((t % 15) / 3);
+  };
+
   let pan = 0, tilt = 45;
   const moving = { pan: false, tilt: false };
   const rows = [];
@@ -47,12 +56,12 @@ export function generate({ endMs = Date.now(), seed = 7 } = {}) {
   for (let t = 0; t < SECONDS; t++) {
     // where the lamp is, in the mount's pan/tilt frame, and how bright it is
     const early = 1 - smooth(t / 90); // lamp starts near the home pose, then wanders
-    const az = clamp(5 + 52 * Math.sin(t / 430 + 0.6) + 22 * Math.sin(t / 141 + 1.9) + 6 * Math.sin(t / 37), -78, 78) * (1 - early) + 22 * early;
-    const el = clamp(52 + 24 * Math.sin(t / 360 + 2.1) + 9 * Math.sin(t / 113) + 3 * Math.sin(t / 29), 17, 83) * (1 - early) + 62 * early;
+    const az = clamp(5 + 52 * Math.sin(t / 170 + 0.6) + 22 * Math.sin(t / 61 + 1.9) + 6 * Math.sin(t / 37), -78, 78) * (1 - early) + 22 * early;
+    const el = clamp(52 + 24 * Math.sin(t / 150 + 2.1) + 9 * Math.sin(t / 47) + 3 * Math.sin(t / 29), 17, 83) * (1 - early) + 62 * early;
     let b = 0.75 + 0.15 * Math.sin(t / 520) + 0.08 * Math.sin(t / 97);
     if (t >= 1500 && t < 1560) b *= 0.55; // someone walks past the lamp
     if (t >= 2600 && t < 2640) b *= 0.6;
-    b = clamp(b, 0.25, 1);
+    b = clamp(b * level(t), 0.25, 1);
 
     const tracking = t >= START_TRACK_S;
     let exN = 0, ezN = 0, moved = false;

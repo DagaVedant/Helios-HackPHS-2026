@@ -202,7 +202,7 @@
                      cursor: grab; touch-action: pan-y; user-select: none; border-radius: 8px; }
         .rig-stage.dragging { cursor: grabbing; }
         .rig-stage:focus-visible { outline: 2px solid #c47b1b; outline-offset: 2px; }
-        .rig { position: absolute; inset: 0; transform-style: preserve-3d; transition: transform 0.35s ease-out; }
+        .rig { position: absolute; inset: 0; transform-style: preserve-3d; transition: transform 1.6s cubic-bezier(0.4, 0, 0.2, 1); }
         .rig-stage.dragging .rig { transition: none; }
         .rig > img { position: absolute; display: block; pointer-events: none; }
         .rig-panel { left: 45px; top: 69px; width: 170px; height: 102px; box-shadow: 0 0 0 3px #b8bec8; border-radius: 1px; }
@@ -211,6 +211,13 @@
         .rig-ldr-bottom { left: 119px; top: 171px; }
         .rig-ldr-left   { left: 15px;     top: 101px; transform: rotate(90deg); }
         .rig-ldr-right  { left: 223px; top: 101px; transform: rotate(-90deg); }
+        .ldr-tag { position: absolute; font: 600 12px ui-monospace, monospace; font-variant-numeric: tabular-nums;
+                   color: #243047; background: #fdf8ec; border: 1px solid #c9b48a; border-radius: 4px;
+                   padding: 1px 5px; pointer-events: none; }
+        .ldr-tag-left   { left: 6px;   top: 136px; }
+        .ldr-tag-right  { left: 213px; top: 136px; }
+        .ldr-tag-top    { left: 150px; top: 36px; }
+        .ldr-tag-bottom { left: 150px; top: 176px; }
         .ldr-readout { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; text-align: center; }
         .ldr-readout dt { font-size: 11px; color: #687386; }
         .ldr-readout dd { margin: 0; font: 600 14px ui-monospace, monospace; font-variant-numeric: tabular-nums; color: #243047; }
@@ -360,6 +367,10 @@
                     <img class="rig-ldr rig-ldr-right"  data-ldr="v2" src="/img/ldr.png" alt="" width="22" height="38" draggable="false">
                     <img class="rig-ldr rig-ldr-top"    data-ldr="v3" src="/img/ldr.png" alt="" width="22" height="38" draggable="false">
                     <img class="rig-ldr rig-ldr-bottom" data-ldr="v4" src="/img/ldr.png" alt="" width="22" height="38" draggable="false">
+                    <span class="ldr-tag ldr-tag-left" data-tag="v1" aria-hidden="true">0</span>
+                    <span class="ldr-tag ldr-tag-right" data-tag="v2" aria-hidden="true">0</span>
+                    <span class="ldr-tag ldr-tag-top" data-tag="v3" aria-hidden="true">0</span>
+                    <span class="ldr-tag ldr-tag-bottom" data-tag="v4" aria-hidden="true">0</span>
                 </div>
             </div>
             <div class="flex w-full items-center justify-between mt-2 text-xs text-slate-500">
@@ -906,6 +917,9 @@
             rigPose.turn = (panAngle - 90) * 0.5;           // pan 0..180 -> -45..45
             renderRig();
 
+            for (const i of [1, 2, 3, 4]) {
+                document.querySelector(`[data-tag="v${i}"]`).textContent = data["l" + i];
+            }
             document.getElementById("v1").textContent = data.l1;
             document.getElementById("v2").textContent = data.l2;
             document.getElementById("v3").textContent = data.l3;
@@ -920,6 +934,52 @@
             updateQuadrantUI("v4", data.l4, brightest);
         }
 
+        function pushChartPoint(watts) {
+            chartData.labels.push(((Date.now() - liveTimelineStart) / 1000).toFixed(0));
+            chartData.labels.shift();
+            chartData.datasets[0].data.push(Number(watts));
+            chartData.datasets[0].data.shift();
+        }
+
+        // While no tracker is posting, step through the stored samples once a second, as if the lamp were moving.
+        const replay = { rows: null, i: 0, loading: false, timer: null };
+
+        async function startReplay() {
+            if (replay.timer || replay.loading) return;
+            if (!replay.rows) {
+                replay.loading = true;
+                try {
+                    const r = await fetch("/api/replay");
+                    if (!r.ok) throw new Error("HTTP " + r.status);
+                    const body = await r.json();
+                    replay.rows = body.samples || [];
+                    replay.i = Math.min(60, Math.max(0, replay.rows.length - 1));
+                    // prefill the timeline with the readings leading up to the start point
+                    for (let k = Math.max(0, replay.i - maxDataPoints); k < replay.i; k++) pushChartPoint(replay.rows[k].w);
+                    wattChart.update("none");
+                } catch (error) {
+                    return;
+                } finally {
+                    replay.loading = false;
+                }
+            }
+            if (!replay.rows.length) return;
+            replay.timer = setInterval(stepReplay, 1000);
+            stepReplay();
+        }
+
+        function stopReplay() {
+            if (replay.timer) { clearInterval(replay.timer); replay.timer = null; }
+        }
+
+        function stepReplay() {
+            const row = replay.rows[replay.i];
+            replay.i = (replay.i + 1) % replay.rows.length;
+            applyTelemetry(row);
+            pushChartPoint(row.w);
+            wattChart.update("none");
+        }
+
         async function pollLatest() {
             let data;
             try {
@@ -931,30 +991,22 @@
                 return;
             }
 
-            if (data.empty) {
-                setBadge("", BADGE_WARN);
+            if (data.empty || !data.online) {
+                setBadge("", BADGE_OFF);
+                document.getElementById("last-seen").innerText = "";
+                startReplay();
                 return;
             }
-
+            stopReplay();
             applyTelemetry(data);
             document.getElementById("last-seen").innerText = "";
-
-            if (!data.online) {
-                setBadge("", BADGE_OFF);
-                return;
-            }
             setBadge(data.status, data.status === "ALIGNED" ? BADGE_OK : BADGE_WARN);
 
             // Add the newest reading to the live chart (once per new sample).
             const key = data.age_s + ":" + data.w;
             if (key === lastTelemetryKey) return;
             lastTelemetryKey = key;
-            chartData.labels.push(
-                ((Date.now() - liveTimelineStart) / 1000).toFixed(0)
-            );
-            chartData.labels.shift();
-            chartData.datasets[0].data.push(Number(data.w));
-            chartData.datasets[0].data.shift();
+            pushChartPoint(data.w);
             wattChart.update("none");
         }
 
