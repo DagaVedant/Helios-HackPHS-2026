@@ -21,6 +21,22 @@ At night the mount returns home. An A/B test mode runs 10 s fixed, then 10 s tra
 
 ![Helios schematic](web/public/img/schematic.png)
 
+## Efficiency
+
+Does tracking pay for itself? These are estimates from typical datasheet numbers, not measurements from this build. The 18% gain comes from the A/B test, whose sample history is reconstructed (see Dashboard).
+
+| Setup | Parasitic load | Daily cost | Panel needed to break even |
+|---|---|---|---|
+| Servos only, PWM detached | tiny | ~0.03 Wh | under 1 W |
+| Servos, PWM held all day | ~0.1 W | ~1 Wh | ~1 W |
+| Servos plus Pi 5, always on | ~3 W | ~72 Wh | ~80 W at +18%, ~48 W at +30% |
+| Servos plus ESP32 or Pico class | ~0.3 W | ~7 Wh | ~8 W at +18%, ~5 W at +30% |
+
+- **This build:** the 3.6 W panel makes about 18 Wh/day, so +18% is about 3.2 Wh. The servos barely matter. The Pi uses about four times the panel's whole output, so with a Pi this is a net loss. A microcontroller, or a Pi that sleeps between moves, fixes that.
+- **Solar farm:** single-axis trackers gain about 15 to 25% in sunny regions (5 to 10% where it is cloudy) and spend about 1% or less of their output on moving. They break even at a gain of roughly 0.1%, so the energy is clearly positive. The real cost is hardware, upkeep and wind handling.
+- **Rooftop:** a 400 W panel gains about 0.35 kWh/day net, worth roughly $20 to 25 a year. Adding 20% more fixed panels is cheaper, so rooftops stay fixed.
+- **Torque:** the MG90S gives about 2 kg-cm. A larger panel needs a gearmotor, linear actuator or slew drive.
+
 ## Dashboard
 
 Live at **https://helios-hackphs.vercel.app/**. It shows pan and tilt, the four LDR levels, panel voltage, current and power, history charts, the A/B result, and CSV export. The page shows OFFLINE after 5 seconds without data. Lux, temperature and humidity have no sensor in this build and show n/a.
