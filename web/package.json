@@ -1,0 +1,17 @@
+{
+  "name": "helios-dashboard",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Helios solar tracker dashboard: Vercel API routes + Neon Postgres",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "migrate": "node scripts/migrate.mjs",
+    "seed": "node scripts/seed.mjs",
+    "seed:dry": "node scripts/seed.mjs --dry-run",
+    "test": "node scripts/test.mjs"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "1.2.0"
+  }
+}

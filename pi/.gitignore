@@ -1,0 +1,6 @@
+.venv/
+__pycache__/
+.env
+outbox.jsonl
+.sender_offset
+logs/

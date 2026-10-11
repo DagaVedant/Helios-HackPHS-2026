@@ -1,0 +1,6 @@
+adafruit-blinka
+adafruit-circuitpython-ads1x15
+adafruit-circuitpython-ssd1306
+adafruit-circuitpython-ina219
+Pillow
+rpi-hardware-pwm

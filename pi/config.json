@@ -1,0 +1,26 @@
+{
+  "ldr_channels": {
+    "left": 0,
+    "right": 1,
+    "top": 2,
+    "bottom": 3
+  },
+  "pan_sign": 1,
+  "tilt_sign": 1,
+  "one_axis": false,
+  "dark_threshold": 2000,
+  "oled_address": 60,
+  "pwm_chip": 2,
+  "gain": 8.0,
+  "deadband": 0.03,
+  "max_step_deg": 3.0,
+  "loop_hz": 20,
+  "pan_channel": 0,
+  "tilt_channel": 1,
+  "tilt_min": 15.0,
+  "tilt_max": 85.0,
+  "pan_min": -80.0,
+  "pan_max": 80.0,
+  "shunt_ohms": 0.1,
+  "home_after_s": 300
+}
