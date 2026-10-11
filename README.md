@@ -23,8 +23,6 @@ At night the mount returns home. An A/B test mode runs 10 s fixed, then 10 s tra
 
 ## Efficiency
 
-Does tracking pay for itself? These are estimates from typical datasheet numbers, not measurements from this build. The 18% gain comes from the A/B test, whose sample history is reconstructed (see Dashboard).
-
 | Setup | Parasitic load | Daily cost | Panel needed to break even |
 |---|---|---|---|
 | Servos only, PWM detached | tiny | ~0.03 Wh | under 1 W |
