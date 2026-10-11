@@ -199,11 +199,8 @@
 
 
         .rig-stage { width: 260px; height: 240px; margin: 0 auto; perspective: 800px; position: relative;
-                     cursor: grab; touch-action: pan-y; user-select: none; border-radius: 8px; }
-        .rig-stage.dragging { cursor: grabbing; }
-        .rig-stage:focus-visible { outline: 2px solid #c47b1b; outline-offset: 2px; }
-        .rig { position: absolute; inset: 0; transform-style: preserve-3d; transition: transform 1.6s cubic-bezier(0.4, 0, 0.2, 1); }
-        .rig-stage.dragging .rig { transition: none; }
+                     user-select: none; border-radius: 8px; }
+        .rig { position: absolute; inset: 0; transform-style: preserve-3d; transition: transform 0.25s linear; }
         .rig > img { position: absolute; display: block; pointer-events: none; }
         .rig-panel { left: 45px; top: 69px; width: 170px; height: 102px; box-shadow: 0 0 0 3px #b8bec8; border-radius: 1px; }
         .rig-ldr { width: 22px; height: 38px; transition: opacity 0.2s; }
@@ -358,9 +355,9 @@
 
             </div>
 
-            <!-- Solar panel with four LDRs. Shows the mount's live pose; drag to look around. -->
-            <div id="rig-stage" class="rig-stage" tabindex="0" role="group"
-                 aria-label="3D view of the panel and its four light sensors. Drag or use arrow keys to rotate.">
+            <!-- Solar panel with four LDRs. Follows the pan bar. -->
+            <div id="rig-stage" class="rig-stage" role="img"
+                 aria-label="Solar panel and its four light sensors, turning with the mount's pan angle.">
                 <div id="rig" class="rig">
                     <img class="rig-panel" src="/img/panel.jpg" alt="Solar panel" width="170" height="102" draggable="false">
                     <img class="rig-ldr rig-ldr-left"   data-ldr="v1" src="/img/ldr.png" alt="" width="22" height="38" draggable="false">
@@ -372,10 +369,6 @@
                     <span class="ldr-tag ldr-tag-top" data-tag="v3" aria-hidden="true">0</span>
                     <span class="ldr-tag ldr-tag-bottom" data-tag="v4" aria-hidden="true">0</span>
                 </div>
-            </div>
-            <div class="flex w-full items-center justify-between mt-2 text-xs text-slate-500">
-                <span>Drag to rotate</span>
-                <button id="rig-reset" type="button" hidden class="underline hover:text-slate-300 focus-visible:outline-2 focus-visible:outline-offset-2">Reset view</button>
             </div>
             <dl class="ldr-readout w-full mt-3">
                 <div><dt>Left</dt><dd id="v1">0</dd></div>
@@ -412,7 +405,7 @@
                     <div class="h-3 rounded-full bg-slate-800 overflow-hidden">
                         <div
                             id="pan-bar"
-                            class="h-full rounded-full bg-amber-500 transition-[width] duration-200"
+                            class="h-full rounded-full bg-amber-500 transition-[width] duration-[250ms] ease-linear"
                             style="width: 50%"
                         ></div>
                     </div>
@@ -863,42 +856,13 @@
             readout.classList.toggle("quadrant-bright", isBrightest);
         };
 
-        // ---- 3D rig: live pose from the data plus whatever the viewer dragged on top
+        // ---- 3D rig: turns and tilts with the pan bar and tilt from the data
         const rigPose = { lean: 0, turn: 0 };
-        const view = { yaw: 0, pitch: 0 };
         const rigEl = document.getElementById("rig");
-        const rigStage = document.getElementById("rig-stage");
-        const resetBtn = document.getElementById("rig-reset");
-        const clampDeg = (v, lim) => Math.max(-lim, Math.min(lim, v));
         function renderRig() {
             rigEl.style.transform =
-                `rotateX(${(-rigPose.lean + view.pitch).toFixed(1)}deg) rotateY(${(rigPose.turn + view.yaw).toFixed(1)}deg)`;
-            resetBtn.hidden = view.yaw === 0 && view.pitch === 0;
+                `rotateX(${(-rigPose.lean).toFixed(1)}deg) rotateY(${rigPose.turn.toFixed(1)}deg)`;
         }
-        let drag = null;
-        rigStage.addEventListener("pointerdown", (e) => {
-            drag = { x: e.clientX, y: e.clientY, yaw: view.yaw, pitch: view.pitch };
-            rigStage.setPointerCapture(e.pointerId);
-            rigStage.classList.add("dragging");
-        });
-        rigStage.addEventListener("pointermove", (e) => {
-            if (!drag) return;
-            view.yaw = clampDeg(drag.yaw + (e.clientX - drag.x) * 0.5, 80);
-            view.pitch = clampDeg(drag.pitch - (e.clientY - drag.y) * 0.5, 80);
-            renderRig();
-        });
-        const endDrag = () => { drag = null; rigStage.classList.remove("dragging"); };
-        rigStage.addEventListener("pointerup", endDrag);
-        rigStage.addEventListener("pointercancel", endDrag);
-        rigStage.addEventListener("keydown", (e) => {
-            const step = { ArrowLeft: [-8, 0], ArrowRight: [8, 0], ArrowUp: [0, 8], ArrowDown: [0, -8] }[e.key];
-            if (!step) return;
-            e.preventDefault();
-            view.yaw = clampDeg(view.yaw + step[0], 80);
-            view.pitch = clampDeg(view.pitch + step[1], 80);
-            renderRig();
-        });
-        resetBtn.addEventListener("click", () => { view.yaw = 0; view.pitch = 0; renderRig(); });
 
         let lastTelemetryKey = null;
 
@@ -914,7 +878,7 @@
             // data.tilt is the mount's 15-85 deg elevation (+45 offset); lay the panel back as it lowers
             const tiltDeg = Math.max(15, Math.min(85, Number(data.tilt) - 45));
             rigPose.lean = (85 - tiltDeg) * 0.85;          // 0 deg at full elevation, about 60 at the low limit
-            rigPose.turn = (panAngle - 90) * 0.5;           // pan 0..180 -> -45..45
+            rigPose.turn = (panAngle - 90) * 0.9;           // same angle as the bar, 90 = square on
             renderRig();
 
             for (const i of [1, 2, 3, 4]) {
@@ -964,7 +928,7 @@
                 }
             }
             if (!replay.rows.length) return;
-            replay.timer = setInterval(stepReplay, 1000);
+            replay.timer = setInterval(stepReplay, 250);
             stepReplay();
         }
 
@@ -972,12 +936,24 @@
             if (replay.timer) { clearInterval(replay.timer); replay.timer = null; }
         }
 
+        // 4 updates a second: samples are 1 s apart, so pan, tilt and the rest are interpolated between them
+        let replayQuarter = 0;
         function stepReplay() {
-            const row = replay.rows[replay.i];
-            replay.i = (replay.i + 1) % replay.rows.length;
-            applyTelemetry(row);
-            pushChartPoint(row.w);
-            wattChart.update("none");
+            const rows = replay.rows;
+            const a = rows[replay.i], b = rows[(replay.i + 1) % rows.length];
+            const f = replayQuarter / 4;
+            const mix = (k) => a[k] + (b[k] - a[k]) * f;
+            const out = { status: a.status };
+            for (const k of ["v", "ma", "w", "l1", "l2", "l3", "l4", "pan", "tilt"]) out[k] = mix(k);
+            for (const k of ["l1", "l2", "l3", "l4"]) out[k] = Math.round(out[k]);
+            applyTelemetry(out);
+            replayQuarter++;
+            if (replayQuarter === 4) {
+                replayQuarter = 0;
+                replay.i = (replay.i + 1) % rows.length;
+                pushChartPoint(b.w);
+                wattChart.update("none");
+            }
         }
 
         async function pollLatest() {

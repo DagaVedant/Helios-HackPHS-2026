@@ -56,7 +56,8 @@ export function generate({ endMs = Date.now(), seed = 7 } = {}) {
   for (let t = 0; t < SECONDS; t++) {
     // where the lamp is, in the mount's pan/tilt frame, and how bright it is
     const early = 1 - smooth(t / 90); // lamp starts near the home pose, then wanders
-    const az = clamp(5 + 52 * Math.sin(t / 170 + 0.6) + 22 * Math.sin(t / 61 + 1.9) + 6 * Math.sin(t / 37), -78, 78) * (1 - early) + 22 * early;
+    const tri = 1 - Math.abs(((t % 60) / 30) - 1); // 0 -> 1 -> 0 over 60 s
+    const az = -70 + 120 * tri;
     const el = clamp(52 + 24 * Math.sin(t / 150 + 2.1) + 9 * Math.sin(t / 47) + 3 * Math.sin(t / 29), 17, 83) * (1 - early) + 62 * early;
     let b = 0.75 + 0.15 * Math.sin(t / 520) + 0.08 * Math.sin(t / 97);
     if (t >= 1500 && t < 1560) b *= 0.55; // someone walks past the lamp
@@ -69,10 +70,9 @@ export function generate({ endMs = Date.now(), seed = 7 } = {}) {
       exN = Math.tanh((az - pan) / 35) * 0.6;
       ezN = Math.tanh((el - tilt) / 35) * 0.6;
       if (!tracking) continue;
-      const p0 = pan, t0 = tilt;
-      pan = axisStep(exN, "pan", PAN[0], PAN[1], pan);
+      pan = az; // the pan axis sweeps on a fixed 60 s cycle (4 deg/s)
       tilt = axisStep(ezN, "tilt", TILT[0], TILT[1], tilt);
-      moved = pan !== p0 || tilt !== t0;
+      moved = true;
     }
 
     const base = (5000 + 11000 * b) * (1 + noise(0.05));
