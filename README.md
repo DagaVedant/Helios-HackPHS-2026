@@ -1,34 +1,113 @@
-# Balcony Solar Optimizer (Micro-Tracker) - hackPHS 2026, theme "Into the Skies"
+# Helios
 
-A dual-axis (pan + tilt) mount for one 178 x 142 x 2 mm KEJNYT 12 V 3.6 W panel. Four edge LDRs steer it. A Raspberry Pi 5 is the brain (no Arduino boards), an ADS1115 reads the LDRs, an INA219 measures panel output, and a Vercel dashboard shows it. Servos are the kit MG90S/SG90.
+**A small solar panel that follows the light.** Built for hackPHS 2026, theme "Into the Skies".
 
-## Folders
-- pi : tracker.py (sensors, control, CSV log, outbox) and sender.py (pushes the outbox to Vercel).
-- web : the Helios dashboard for Vercel (static page in public/, API routes in api/, Neon schema and seed in scripts/).
+[Live dashboard](https://helios-hackphs.vercel.app/) | [Devpost](https://devpost.com/software/solar-benders) | Demo video: TBD
 
-## Electronics decisions made
-- Servo power: any 5 V source of about 2 A that is not the Pi (the MB102 module with a 9 V wall adapter also works; a 9 V battery does not). Common ground to a Pi GND pin.
-- LDR: GL5528 (in the kit, matches a 10k divider). Never mix 5528 and 5539. If buying, buy 20-50, measure under one lamp, keep the 4 best-matched.
-- Software limits: pan +/-80, tilt 15 to 85 degrees.
+![Helios build](web/public/img/build-black.jpg)
 
-## Dashboard (Vercel + Neon)
-The sample history on the dashboard (1 hour at 1 Hz) is reconstructed from value ranges observed while building, not a raw recording.
+## The idea
+
+A fixed balcony panel only faces the sun for part of the day. Helios tilts and turns a panel toward the brightest light, so the same panel makes more power from the same sky. It runs on a Raspberry Pi 5, costs a few dollars in sensors, and streams everything it measures to a live web dashboard.
+
+## How it works
+
+1. **Sense.** Four light sensors (LDRs) sit at the edges of the panel, read by an ADS1115 ADC.
+2. **Steer.** The Pi compares left vs right and top vs bottom, then drives two hobby servos (pan and tilt) toward the brighter side until the four readings even out.
+3. **Measure.** An INA219 reads the panel's voltage, current and power, so we can compare tracking against a fixed panel.
+4. **Show.** The Pi logs locally and pushes readings to a Vercel + Neon dashboard.
+
+At night the mount returns home. An A/B test mode runs 10 s fixed, then 10 s tracking, to show the gain.
+
+![Helios schematic](web/public/img/schematic.png)
+
+## Dashboard
+
+Live at **https://helios-hackphs.vercel.app/**. It shows pan and tilt, the four LDR levels, panel voltage, current and power, history charts, the A/B result, and CSV export. The page shows OFFLINE after 5 seconds without data. Lux, temperature and humidity have no sensor in this build and show n/a.
+
+The sample history shown before live data arrives is reconstructed from value ranges observed during the build. It is not a raw recording.
+
+## Hardware
+
+| Part | Job |
+|---|---|
+| Raspberry Pi 5 | Runs the control loop |
+| 12 V 3.6 W panel (178 x 142 mm) | The thing being aimed |
+| 2 x MG90S servos | Pan and tilt |
+| 4 x GL5528 LDRs | Direction sensing |
+| ADS1115 | Reads the LDRs |
+| INA219 | Measures panel power |
+| SSD1306 OLED | Local readout |
+| MB102 breadboard supply | Separate 5 V rail for the servos |
+
+## Wiring
+
+| Function | Pin / address |
+|---|---|
+| Pan servo signal | GPIO 12 (hardware PWM) |
+| Tilt servo signal | GPIO 13 (hardware PWM) |
+| I2C | SDA GPIO 2, SCL GPIO 3 |
+| INA219 | 0x40 |
+| ADS1115 | 0x48 (ADDR to ground) |
+| OLED | 0x3C |
+
+- Servo power comes from the MB102 5 V rail, never from the Pi. Join its ground to a Pi GND pin.
+- Each LDR is a divider: 3.3 V, LDR, ADS1115 input, 10k to ground.
+- Software limits: pan +/-80 degrees, tilt 15 to 85 degrees. Tuning lives in `pi/config.json`.
+
+Full schematic: `web/public/img/schematic.png`.
+
+## Run it
+
+### Pi
 
 One-time setup:
-1. Create a Neon database and a Vercel project from the `web` folder (Root Directory = `web`).
-2. In Vercel set `DATABASE_URL` (Neon connection string) and `INGEST_SECRET` (a long random string). Copy both into `web/.env` for the scripts (see `web/.env.example`).
-3. `cd web && npm install && npm run migrate && npm run seed` (use `npm run seed:dry` first to preview the data; `-- --reset` replaces existing rows).
-4. Deploy (`vercel --prod`, or push to the linked Git repo).
 
-On the Pi, in two SSH sessions:
+```bash
+sudo raspi-config        # Interface Options -> I2C -> Enable
+# add to /boot/firmware/config.txt, then reboot:
+dtoverlay=pwm-2chan,pin=12,func=4,pin2=13,func2=4
+i2cdetect -y 1           # expect 0x40, 0x48, 0x3C
 ```
-python tracker.py      # sensors, control, writes outbox.jsonl, logs/*.csv
-python sender.py       # reads outbox.jsonl, POSTs to /api/ingest
+
+Install and start:
+
+```bash
+cd pi
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+python tracker.py        # add --no-servo to test sensors and OLED only
 ```
-`sender.py` reads `MT_API_URL` (https://your-app.vercel.app/api/ingest) and `MT_SHARED_SECRET` (same value as `INGEST_SECRET`) from `pi/.env` (see `pi/.env.example`). It keeps working through Wi-Fi drops and sends the backlog when the link returns. The page shows OFFLINE after 5 seconds without data.
 
-Dashboard routes: `/api/ingest` (POST, secret required), `/api/latest`, `/api/energy-history`, `/api/ab`, `/api/export` (CSV). The page shows pan and tilt on its 0-180 bars with 90 as the center (pan + 90, tilt + 45), and LDR counts scaled to 0-1023. Lux, temperature and humidity have no sensor on this build and show n/a. Run `cd web && npm test` for the logic checks.
+In a second SSH session, push readings to the dashboard:
 
-## Image credits
+```bash
+python sender.py
+```
 
-The solar panel image on the dashboard is cropped and straightened from "Photovoltaic Solar Panel.jpg" by AcornToOak on Wikimedia Commons, licensed CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0). The photoresistor image is cropped from "LDR07 Light-dependent CdS photoresistor.jpg" by BenTheWikiMan on Wikimedia Commons, public domain.
+Copy `pi/.env.example` to `pi/.env` and set `MT_API_URL` and `MT_SHARED_SECRET`. The sender survives Wi-Fi drops and sends the backlog when the link returns.
+
+Keys in the tracker terminal: `a` arm servos, `t` toggle track/fixed, `j`/`l` pan, `i`/`k` tilt, `x` A/B test, `c` calibrate, `q` quit.
+
+### Dashboard
+
+```bash
+cd web
+npm install
+npm run migrate          # create tables in Neon
+npm run seed:dry         # preview sample history, then: npm run seed
+npm test                 # logic checks
+vercel --prod
+```
+
+Set `DATABASE_URL` (Neon) and `INGEST_SECRET` in Vercel and in `web/.env` (see `web/.env.example`). API routes: `/api/ingest` (POST, secret required), `/api/latest`, `/api/energy-history`, `/api/ab`, `/api/export`.
+
+## Repo layout
+
+- `pi/` - sensing, control, logging and the sender
+- `web/` - Vercel dashboard, API routes and Neon schema
+
+## Credits
+
+- Solar panel photo: "Photovoltaic Solar Panel.jpg" by AcornToOak, Wikimedia Commons, CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0). Cropped and straightened.
+- Photoresistor photo: "LDR07 Light-dependent CdS photoresistor.jpg" by BenTheWikiMan, Wikimedia Commons, public domain. Cropped.
